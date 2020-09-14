@@ -1,0 +1,67 @@
+.\NTttcp.exe -?
+
+Ntttcp-for-Linux version 1.4.0
+
+ntttcp: [-r|-s|-D|-M|-L|-e|-H|-P|-n|-l|-6|-u|-p|-f|-b|-B|-W|-t|-C|-N|-x|-O|-Q|-V|-h|-m <mapping>]
+        [--show-tcp-retrans|--show-nic-packets|--show-dev-interrupts|--fq-rate-limit]
+
+        -r   Run as a receiver
+        -s   Run as a sender
+        -D   Run as daemon
+        -M   [receiver only] multi-clients mode
+        -L   [sender only] indicates this is the last client when receiver is running with multi-clients mode
+        -e   [receiver only] use epoll() instead of select()
+        -H   [receiver only] hold receiver always running even after one test finished
+        -P   Number of ports listening on receiver side [default: 16] [max: 512]
+        -n   [sender only] number of threads per each receiver port     [default: 4] [max: 25600]
+        -l   [sender only] number of connections per each sender thread [default: 1] [max: 1000]
+        -6   IPv6 mode    [default: IPv4]
+        -u   UDP mode     [default: TCP]
+        -p   Destination port number, or starting port number    [default: 5001]
+        -f   Fixed source port number, or starting port number    [default: 25001]
+        -b   <buffer size in n[KMG] Bytes>    [default: 65536 (receiver); 131072 (sender)]
+        -B   <bandwidth limit in n[KMG] bits/sec> set limit to the bandwidth
+        -W   Warm-up time in seconds          [default: 0]
+        -t   Time of test duration in seconds [default: 60]
+        -C   Cool-down time in seconds        [default: 0]
+        -N   No sync, senders will start sending as soon as possible
+             Otherwise, will use 'destination port - 1' as sync port    [default: 5000]
+        -x   Save output to XML file, by default saves to ntttcp-for-linux-log.xml
+        -O   Save console log to file, by default saves to ntttcp-for-linux-log.log
+        -Q   Quiet mode
+        -V   Verbose mode
+        -h   Help, tool usage
+        -m   <mapping>  for the purpose of compatible with Windows ntttcp usage
+             Where a mapping is a 3-tuple of NumberOfReceiverPorts, Processor, ReceiverAddress:
+             NumberOfReceiverPorts:    [default: 16]  [max: 512]
+             Processor:         *, or cpuid such as 0, 1, etc
+             e.g. -m 8,*,192.168.1.1
+                    If for receiver role: 8 threads listening on 8 ports (one port per thread) on the network 192.168.1.1;
+                        and those threads will run on all processors.
+                    If for sender role: receiver has 8 ports listening on the network 192.168.1.1;
+                        sender will create 8 threads to talk to all of those receiver ports
+                        (1 sender thread to one receiver port; this can be overridden by '-n');
+                        and all sender threads will run on all processors.
+
+        --show-tcp-retrans      Show system TCP retransmit counters in log from /proc
+        --show-nic-packets <network interface name>
+                                Show number of packets transferred (tx and rx) through this network interface
+        --show-dev-interrupts <device differentiator>
+                                Show number of interrupts for the devices specified by the differentiator
+                                Examples for differentiator: Hyper-V PCIe MSI, mlx4, Hypervisor callback interrupts, ...
+        --fq-rate-limit         Limit socket rate by Fair Queue (FQ) traffic policing
+
+Example:
+        receiver:
+        1) ./ntttcp -r
+        2) ./ntttcp -r 192.168.1.1
+        3) ./ntttcp -r -m 8,*,192.168.1.1 -6
+        4) ./ntttcp -r -m 8,0,192.168.1.1 -6 --show-tcp-retrans --show-nic-packets eth0 --show-dev-interrupts mlx4 -V
+        sender:
+        1) ./ntttcp -s
+        2) ./ntttcp -s 192.168.1.1
+        3) ./ntttcp -s -m 8,*,192.168.1.1 -n 16 -6
+        4) ./ntttcp -s 192.168.1.1 -P 64 -n 16 -l 10 -f25001 -6 -V
+        3) ./ntttcp -s 192.168.1.1 --fq-rate-limit 10G
+        4) ./ntttcp -s 192.168.1.1 -B 10G
+        4) ./ntttcp -s 192.168.1.1 --show-tcp-retrans --show-nic-packets eth0 --show-dev-interrupts mlx4 -V
