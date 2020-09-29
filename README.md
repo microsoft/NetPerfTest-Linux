@@ -19,7 +19,7 @@ First, we must generate a bunch of relevant networking tests between these machi
 Now that the folder is created, we're ready to generate the commands using the PERFTEST cmdlet :
 
 ```PowerShell
-./PERFTEST.PS1 -DestIp DestinationMachineIP -SrcIP SourceMachineIP -OutDir "/home/user/Temp/MyDirectoryForTesting"
+./PERFTEST.PS1 -DestIp "DestinationMachineIP" -SrcIP "SourceMachineIP" -OutDir "/home/user/Temp/MyDirectoryForTesting"
 ```
 
 Note that if you include the home and user directory (ej. /home/user), the username must be the same on the Source and 
@@ -52,7 +52,7 @@ For further help with this function, run ```Get-Help ProcessCommands```
 
 The command to run tests is:
 ```
-ProcessCommands -DestIp DestinationMachineIP -SrcIp SourceMachineIP -CommandsDir Temp/MyDirectoryForTesting/msdbg.CurrentMachineName.perftest -SrcIpUserName SrcUserName -DestIpUserName DestUserName
+ProcessCommands -DestIp "DestinationMachineIP" -SrcIp "SourceMachineIP" -CommandsDir "/home/user/Temp/MyDirectoryForTesting/msdbg.CurrentMachineName.perftest" -SrcIpUserName SrcUserName -DestIpUserName DestUserName
 ```
 
 You will be prompted for password for credentials of both the source and destination machine. It a Secure-string so your password will not be displayed or stored in clear text at any point.

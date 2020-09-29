@@ -27,8 +27,8 @@ Param ([Int]$AdditionalTimeout, [string] $Line)
         try {
             [Int] $warmup = ($Line.Substring($Line.IndexOf("-wu")+("-wu".Length)+1).Split(' ')[0])
             [Int] $cooldown = ($Line.Substring($Line.IndexOf("-cd")+("-cd".Length)+1).Split(' ')[0])
-            [Int] $rumtime = ($Line.Substring($Line.IndexOf("-t")+("-t".Length)+1).Split(' ')[0])
-            $timeout += $warmup + $cooldown + $rumtime
+            [Int] $runtime = ($Line.Substring($Line.IndexOf("-t")+("-t".Length)+1).Split(' ')[0])
+            $timeout += $warmup + $cooldown + $runtime
         }
        catch {}
     }
@@ -64,8 +64,7 @@ $ScriptBlockTaskKill = {
 # Set up a directory on the remote machines for results gathering.
 $ScriptBlockCreateDirForResults = {
     param ($Cmddir)
-    $Exists = Test-Path $Cmddir
-    if (!$Exists) {
+    if (!(Test-Path $Cmddir)) {
         New-Item -ItemType Directory -Force -Path "$Cmddir" | Out-Null
     }
     return $Exists
@@ -432,7 +431,6 @@ Function ProcessToolCommands{
                 LogWrite "Waiting for $timeout seconds ..."
                 $sw.Reset()
                 $sw.Start()
-                $timeout = new-timespan -Seconds $TimeoutValueBetweenCommandPairs
                 # check job status until job is done running
                 while ($sw.elapsed -lt $timeout){
                     start-sleep -seconds $PollTimeInSeconds
