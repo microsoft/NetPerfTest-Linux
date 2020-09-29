@@ -432,7 +432,7 @@ Function ProcessToolCommands{
                 $sw.Reset()
                 $sw.Start()
                 # check job status until job is done running
-                while ($sw.elapsed -lt $timeout){
+                while (([math]::Round($sw.Elapsed.TotalSeconds,0)) -lt $timeout) {
                     start-sleep -seconds $PollTimeInSeconds
                     if ($recvJob.State -eq "Completed" -and $sendJob.State -eq "Completed") {         
                         LogWrite "$Toolname exited on both Src and Dest machines"
