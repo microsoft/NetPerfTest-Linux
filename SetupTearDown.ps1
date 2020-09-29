@@ -83,7 +83,7 @@ Function CleanupRemoting{
 function main {
     try {
         # create credential blob to store username and password securely 
-        [PSCredential] $creds = New-Object System.Management.Automation.PSCredential("", $Password)
+        [PSCredential] $creds = New-Object System.Management.Automation.PSCredential("user", $Password)
         if($Setup.IsPresent) {
             SetupRemoting -Creds $creds -Port $Port
         } elseif($Cleanup.IsPresent) {
