@@ -68,7 +68,7 @@ Function CleanupRemoting{
     Write-Host "Disabling PSRemoting via SSH on this computer..."
     Write-Host "Editing sshd_config file to allow for public key and password authentication to default port"
     # edit ssh server to listen to default port of 22
-    Write-Output $Creds.GetNetworkCredential().Password | sudo -u $Creds.GetNetworkCredential().UserName -S sed -i 's/#\?\(Port\s*\).*$/\122/' /etc/ssh/sshd_config
+    Write-Output $Creds.GetNetworkCredential().Password | sudo -S sed -i 's/#\?\(Port\s*\).*$/\122/' /etc/ssh/sshd_config
     # restart and stop sshd server 
     sudo service sshd restart | Out-Null 
     Write-Host "Stopping Open-SSH Server service"
