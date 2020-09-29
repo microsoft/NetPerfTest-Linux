@@ -19,12 +19,11 @@ First, we must generate a bunch of relevant networking tests between these machi
 Now that the folder is created, we're ready to generate the commands using the PERFTEST cmdlet :
 
 ```PowerShell
-./PERFTEST.PS1 -DestIp DestinationMachineIP -SrcIP SourceMachineIP -OutDir "Temp/MyDirectoryForTesting"
+./PERFTEST.PS1 -DestIp DestinationMachineIP -SrcIP SourceMachineIP -OutDir "/home/user/Temp/MyDirectoryForTesting"
 ```
 
 Note that if you include the home and user directory (ej. /home/user), the username must be the same on the Source and 
-Destination machine you are testing. Also, PowerShell does not have the "tilde expansion", so the tilde does not alias to 
-the home directory of the user. 
+Destination machine you are testing.
 
 ## Setup
 

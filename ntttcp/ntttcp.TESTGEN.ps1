@@ -187,6 +187,8 @@ function test_main {
     
     New-Item -ItemType directory -Path $dir | Out-Null
     Write-Host "test_ntttcp -OutDir $dir -ConfigFile $g_ConfigFile"
+
+    # Use default values if config file does not exist
     if (Test-Path $g_ConfigFile) {
         test_ntttcp -OutDir $dir -ConfigFile $g_ConfigFile
     } else {

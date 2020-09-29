@@ -113,7 +113,8 @@ function test_main {
     env_destroy -OutDir $workDir
     env_create  -OutDir $workDir
 
-    .\lagscope\lagsope.TESTGEN.ps1   -DestIp $g_DestIp -SrcIp $g_SrcIp -OutDir $workDir -Iterations $g_iters
-    .\ntttcp\ntttcp.TESTGEN.ps1 -DestIp $g_DestIp -SrcIp $g_SrcIp -OutDir $workDir -Detail:$g_detail -Iterations $g_iters -Config $g_config
+    # lagscope does not have detail 
+    ./lagscope/lagscope.TESTGEN.ps1   -DestIp $g_DestIp -SrcIp $g_SrcIp -OutDir $workDir -Iterations $g_iters
+    ./ntttcp/ntttcp.TESTGEN.ps1 -DestIp $g_DestIp -SrcIp $g_SrcIp -OutDir $workDir -Detail:$g_detail -Iterations $g_iters -Config $g_config
 
     } test_main @PSBoundParameters # Entry Point

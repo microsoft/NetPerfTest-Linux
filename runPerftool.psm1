@@ -433,6 +433,7 @@ Function ProcessToolCommands{
                 $sw.Reset()
                 $sw.Start()
                 $timeout = new-timespan -Seconds $TimeoutValueBetweenCommandPairs
+                # check job status until job is done running
                 while ($sw.elapsed -lt $timeout){
                     start-sleep -seconds $PollTimeInSeconds
                     if ($recvJob.State -eq "Completed" -and $sendJob.State -eq "Completed") {         
@@ -440,7 +441,7 @@ Function ProcessToolCommands{
                         break
                     }
                 }
-    
+                # check if job was completed
                 if ($recvJob.State -ne "Completed") {
                     LogWrite " ++ $Toolname on Receiver did not exit cleanly with state " $recvJob.State
                 } 
@@ -465,6 +466,7 @@ Function ProcessToolCommands{
     
             LogWrite "Test runs completed. Collecting results..."
 
+            # remove tool binaries because no need to copy
             Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockRemoveBinaries -ArgumentList "$CommandsDir/Receiver/$Toolname/$Toolname" 
             Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockRemoveBinaries -ArgumentList "$CommandsDir/Sender/$Toolname/$Toolname"
     
@@ -543,14 +545,16 @@ Function ProcessToolCommands{
             Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockCleanupFirewallRules -ArgumentList ("50000:50512/udp", $SendComputerCreds)
             
             LogWrite "Cleaning up public private key and known hosts that were created as part of script run"
-            # Delete public and private key, as well as known host and authorized key
+            # Delete authorized host from receiver and sender computer
             Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockRemoveAuthorizedHost 
             Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockRemoveAuthorizedHost 
 
+            # delete public and private key
             Remove-Item -Path $keyFilePath -ErrorAction SilentlyContinue -Force
             Remove-Item -Path $pubKeyFilePath -ErrorAction SilentlyContinue -Force
             Remove-Item -Path $sshCommandFilePath -ErrorAction SilentlyContinue -Force
 
+            # remove receiver and sender computer as known hosts
             head -n -6 "$homePath/.ssh/known_hosts" | Out-Null
 
             LogWrite "Cleaning up Remote PS Sessions"
