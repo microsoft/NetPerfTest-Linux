@@ -1,5 +1,4 @@
 Param(
-    [parameter(Mandatory=$false)] [switch] $Detail = $false,
     [parameter(Mandatory=$false)] [Int]    $Iterations = 1,
     [parameter(Mandatory=$true)]  [string] $DestIp,
     [parameter(Mandatory=$true)]  [string] $SrcIp,
@@ -13,8 +12,8 @@ function input_display {
     Write-Host "============================================"
     Write-Host "$g_path\$scriptName"
     Write-Host " Inputs:"
-    Write-Host "  -Detail     = $Detail"
-    Write-Host "  -Iterations = $Detail"
+ 
+    Write-Host "  -Iterations = $Iterations"
     Write-Host "  -DestIp     = $DestIp"
     Write-Host "  -SrcIp      = $SrcIp"
     Write-Host "  -OutDir     = $OutDir"
@@ -110,7 +109,6 @@ function test_lagscope_generate {
 #===============================================
 function test_main {
     Param(
-        [parameter(Mandatory=$false)] [switch] $Detail = $false,
         [parameter(Mandatory=$false)] [Int]    $Iterations = 1,
         [parameter(Mandatory=$true)]  [string] $DestIp,
         [parameter(Mandatory=$true)]  [string] $SrcIp,
@@ -119,7 +117,6 @@ function test_main {
     input_display
     
     [int]    $g_iters   = $Iterations
-    [bool]   $g_detail  = $Detail
     [string] $g_DestIp  = $DestIp.Trim()
     [string] $g_SrcIp   = $SrcIp.Trim()
     [string] $dir       = (Join-Path -Path $OutDir -ChildPath "lagscope")  

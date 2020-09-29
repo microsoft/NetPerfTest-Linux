@@ -1,6 +1,5 @@
 lagscope 1.0.0
 ---------------------------------------------------------
-Author: Shihua (Simon) Xiao, sixiao@microsoft.com
 lagscope: [-r|-s|-D|-f|-6|-u|-p|-o|-b|-z|-t|-n|-i|-R|-P|-H|-a|-l|-c|-V|-h]
 
         -r   Run as a receiver
