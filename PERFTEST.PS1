@@ -55,6 +55,17 @@ function env_normalize {
     return (Join-Path $baseDir $workDirName).TrimEnd("\")
 } # env_normalize()
 
+function remote_env_normalize {
+    [CmdletBinding()]
+    Param(
+        [parameter(Mandatory=$true)] [String] $OutDir
+    )
+    $computername = hostname
+    $workDirName = "msdbg.$computername.perftest"
+
+    return (Join-Path $OutDir $workDirName).TrimEnd("\")
+} # remote_env_normalize()
+
 function env_create {
     [CmdletBinding()]
     Param(
@@ -80,6 +91,7 @@ function env_destroy {
         Remove-Item $OutDir -Recurse -Force # Careful - Deletes $OurDir and all its contents
     }
 } # env_destroy()
+
 
 #===============================================
 # External Functions - Main Program
@@ -112,8 +124,11 @@ function test_main {
     [string] $g_DestIp    = $DestIp
     [string] $g_SrcIp     = $SrcIp
 
-    $DestDir = "/home/$DestUserName/$OutDir"
-    $SrcDir = "/home/$SrcUserName/$OutDir"
+    $workDir = env_normalize -OutDir $OutDir
+    Write-Host $workDir
+
+    $DestDir = remote_env_normalize "/home/$DestUserName/$OutDir"
+    $SrcDir = remote_env_normalize "/home/$SrcUserName/$OutDir"
     $OutDir = "$HOME/$OutDir"
 
     $workDir = env_normalize -OutDir $OutDir
