@@ -1,0 +1,40 @@
+lagscope 1.0.0
+---------------------------------------------------------
+lagscope: [-r|-s|-D|-f|-6|-u|-p|-o|-b|-z|-t|-n|-i|-R|-P|-H|-a|-l|-c|-V|-h]
+
+        -r   Run as a receiver
+        -s   Run as a sender
+        -D   Run as daemon (Linux only)
+        -f   Processor number to affinitize to (default: no affinity)
+        -6   IPv6 mode    [default: IPv4]
+        -p   Server port number    [default: 6001]
+        -o   Client port number    [default: 25001]
+        -b   <buffer size in bytes>    [default: 65536 (receiver); 131072 (sender)]
+        -z   <message size>        [default: 4 bytes]
+        -t   [SENDER ONLY] test duration       [default: 60 second(s)]
+        -n   [SENDER ONLY] ping iteration      [default: 1000000]
+        -i   [SENDER ONLY] test interval       [default: 0 second(s)]
+             '-n' will be ignored if '-t' provided
+        -R   [SENDER ONLY] dumps raw latencies into csv file
+        -H   [SENDER ONLY] print histogram of per-iteration latency values
+        -a   [SENDER ONLY] histogram 1st interval start value   [default: 0]
+        -l   [SENDER ONLY] length of histogram intervals        [default: 100]
+        -c   [SENDER ONLY] count of histogram intervals         [default: 10] [max: 98]
+        -P   [SENDER ONLY] prints 50th, 75th, 90th, 99th, 99.9th, 99.99th, 99.999th percentile of latencies
+             Dump latency frequency table to a json file if specified after '-P'
+        -V   Verbose mode
+        -h   Help, tool usage
+Example:
+        receiver:
+        1) ./lagscope -r
+        2) ./lagscope -r192.168.1.1
+        3) ./lagscope -r -D -f0 -6 -p6789 -V
+        sender:
+        1) ./lagscope -s192.168.1.1
+        2) ./lagscope -s192.168.1.1 -t600 -i1 -V
+        3) ./lagscope -s192.168.1.1 -n1000 -6 -i2 -V
+        1) ./lagscope -s192.168.1.1 -H -a10 -l1 -c98
+        1) ./lagscope -s192.168.1.1 -Pfreq_table.json
+        1) ./lagscope -s192.168.1.1 -Rraw_latency_values.csv
+
+Note: There should be no space between option and its value

@@ -1,3 +1,88 @@
+# NetPerfTest-Linux
+
+## Description
+
+NetPerfTest-Linux is a collection of tools used to generate tests, run tests, and collect network configuration,
+and performance statistics for diagnosis of networking performance issues. 
+
+## Pre-Requisites
+These tools are necessary the run the PowerShell scripts in NetPerfTest. Some tools like PuttY, ufw, and SSH client, may already be installed on Linux Systems by default.
+
+* Powershell 6 or higher for Linux
+* SSH client and server (OpenSSH Client and Server)
+* PuTTTY - specifically plink command
+* ufw, or Uncomplicated Firewall
+
+## Command Generation
+Once pre-requisite tools have been installed, we can start the testing process. 
+First, we must generate a bunch of relevant networking tests between these machines. 
+Now that the folder is created, we're ready to generate the commands using the PERFTEST cmdlet :
+
+```PowerShell
+./PERFTEST.PS1 -DestIp "DestinationMachineIP" -SrcIP "SourceMachineIP" -OutDir "Temp/MyDirectoryForTesting" -DestUserName "DestinationUserName" -SrcUserName "SourceUserName"
+```
+
+Note that if you include the home and user directory (ej. /home/user), the username must be the same on the Source and 
+Destination machine you are testing.
+
+## Setup
+
+Before proceeding to run the commands/tests that were generated above, we must enable Powershell Remoting over SSH and enable the firewall. This script will automatically enable PowerShell Remoting over SSH, and will thus modify the configuration file (ej. sshd_config) and firewall rules.  There is a cleanup script that is recommended after collecting the results (more on that below, in the Cleanup section).
+
+To setup the machine(s), run the following command on each machine to test (ej. Destination and Source machine)
+
+```PowerShell
+SetupTearDown.ps1 -Setup
+```
+
+You will be prompted for password for the computer you are running the script on to enable to firewall and edit files. It is a Secure-string so your password will not be displayed or stored in clear text at any point.
+
+## Command Execution and Result Collection
+
+We are now at the phase where we will run the tests against the Source and Destination Machines and collect results for offline troubleshooting.
+The scripts use Powershell Remoting via SSH to kick off commands on the two machines to perform the networking tests.
+You will need to provide the same Source and Destination IPs as you did for commands generation. In addition you must provide the path to the 
+directory of commands that was generated in the Commands Generation phase above. (ej. msdbg.CurrentMachineName.perftest)
+
+RunPerfTool was created as a powershell module with the idea of flexibility with its invocation (invoking from another script versus standalone invocations, etc)
+
+We will thus need to import the Module like this: ```Import-Module -Force .\runPerftool.psm1```
+We will then invoke a single function in this module that will process all the commands and run them and gather the results. 
+For further help with this function, run ```Get-Help ProcessCommands```
+
+The command to run tests is:
+```
+ProcessCommands -DestIp "DestinationMachineIP" -SrcIp "SourceMachineIP" -CommandsDir "/home/user/Temp/MyDirectoryForTesting/msdbg.CurrentMachineName.perftest" -SrcIpUserName SrcUserName -DestIpUserName DestUserName
+```
+
+You will be prompted for password for credentials of both the source and destination machine. It a Secure-string so your password will not be displayed or stored in clear text at any point.
+
+```PowerShell commands
+Import-Module -Force .\runPerftool.psm1
+ProcessCommands -DestIp DestinationMachineIP -SrcIp SourceMachineIP -CommandsDir Temp/MyDirectoryForTesting/msdbg.CurrentMachineName.perftest -SrcIpUserName SrcUserName -DestIpUserName DestUserName
+# For further help run 
+Get-Help ProcessCommands
+```
+
+There will be limited output as most of the output will be suppressed or put into a log file in the command directory (CurrentMachineName.log). Note that there will be output from PowerShell Remoting via SSH that is unable to be suppressed about creating an rsa public/private pair, known hosts, authenticated keys, and sudo prompts that are automated in the script. You will not need to provide input to these prompts other than the initial prompt for the password credentials of the source and destination machine. 
+
+You should see the zip files from DestinationMachineIp and SourceMachineIP machines under the 
+CommandsDir folder you specified (ej. Temp/MyDirectoryForTesting/msdbg.CurrentMachineName.perftest)
+
+At this point you are done! Don't forget to share the folder contents and run Cleanup step below.
+
+## Cleanup
+After finishing running the relevant tests, it is recommended to run cleanup script to undo the steps that were done in the Setup stage. 
+To cleanup the machine(s), run the following command on each machine you leveraged for testing (Destination and Source machine)
+
+```PowerShell 
+SetupTearDown.ps1 -Cleanup
+```
+
+Note that the OpenSSH Server will be turned off and set back the default settings of listening port 22, and allowing password and public key authentication.
+
+You will be prompted for password for the computer you are running the script on to enable to firewall and edit files. It is a Secure-string so your password will not be displayed or stored in clear text at any point.
+
 
 # Contributing
 
