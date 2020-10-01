@@ -25,8 +25,8 @@ Param ([Int]$AdditionalTimeout, [string] $Line)
     if ($Line -match "ntttcp")
     {
         try {
-            [Int] $warmup = ($Line.Substring($Line.IndexOf("-wu")+("-wu".Length)+1).Split(' ')[0])
-            [Int] $cooldown = ($Line.Substring($Line.IndexOf("-cd")+("-cd".Length)+1).Split(' ')[0])
+            [Int] $warmup = ($Line.Substring($Line.IndexOf("-W")+("-W".Length)+1).Split(' ')[0])
+            [Int] $cooldown = ($Line.Substring($Line.IndexOf("-C")+("-C".Length)+1).Split(' ')[0])
             [Int] $runtime = ($Line.Substring($Line.IndexOf("-t")+("-t".Length)+1).Split(' ')[0])
             $timeout += $warmup + $cooldown + $runtime
         }
@@ -226,6 +226,10 @@ Function ProcessCommands{
     $recvComputerName = $DestIp
     $sendComputerName = $SrcIp
 
+    $recvDir = "/home/$DestIpUserName/$CommandsDir"
+    $sendDir = "/home/$SrcIpUserName/$CommandsDir"
+    $CommandsDir = "$HOME/$CommandsDir"
+
     [PSCredential] $sendIPCreds = New-Object System.Management.Automation.PSCredential($SrcIpUserName, $SrcIpPassword)
 
     [PSCredential] $recvIPCreds = New-Object System.Management.Automation.PSCredential($DestIpUserName, $DestIpPassword)
@@ -307,7 +311,9 @@ Function ProcessToolCommands{
         [Parameter(Mandatory=$False)] [int] $PollTimeInSeconds = 5,
         [Parameter(Mandatory=$False)] [int] $ListeningPort = 5985,
         [Parameter(Mandatory=$False)] [int] $FirewallPortMin = 50000,
-        [Parameter(Mandatory=$False)] [int] $FirewallPortMax = 50512
+        [Parameter(Mandatory=$False)] [int] $FirewallPortMax = 50512,
+        [Parameter(Mandatory=$True)] [string]$RecvDir,
+        [Parameter(Mandatory=$True)] [string]$SendDir
         )
         [bool] $gracefulCleanup = $False
         # delay to let credential (public key) propagate before remoting
@@ -371,26 +377,26 @@ Function ProcessToolCommands{
             $recvCmdFile = Join-Path -Path $CommandsDir -ChildPath "/$Toolname/$ToolnameUpper.Commands.Recv.txt"
     
             # Ensure that remote machines have the directory created for results gathering. 
-            $recvFolderExists = Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockCreateDirForResults -ArgumentList ($CommandsDir)
-            $sendFolderExists = Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockCreateDirForResults -ArgumentList ($CommandsDir)
+            $recvFolderExists = Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockCreateDirForResults -ArgumentList ($RecvDir)
+            $sendFolderExists = Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockCreateDirForResults -ArgumentList ($SendDir)
     
             # Clean up the Receiver/Sender folders on remote machines, if they exist so that we dont capture any stale logs
-            Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockRemoveFileFolder -ArgumentList "$CommandsDir/Receiver"
-            Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockRemoveFileFolder -ArgumentList "$CommandsDir/Sender"
+            Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockRemoveFileFolder -ArgumentList "$RecvDir/Receiver"
+            Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockRemoveFileFolder -ArgumentList "$SendDir/Sender"
     
             #Create dirs and subdirs for each of the supported tools
-            Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockCreateDirForResults -ArgumentList ($CommandsDir+"/Receiver/$Toolname/tcp")
-            Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockCreateDirForResults -ArgumentList ($CommandsDir+"/Sender/$Toolname/tcp")
-            Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockCreateDirForResults -ArgumentList ($CommandsDir+"/Receiver/$Toolname/udp")
-            Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockCreateDirForResults -ArgumentList ($CommandsDir+"/Sender/$Toolname/udp")
+            Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockCreateDirForResults -ArgumentList ($RecvDir+"/Receiver/$Toolname/tcp")
+            Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockCreateDirForResults -ArgumentList ($SendDir+"/Sender/$Toolname/tcp")
+            Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockCreateDirForResults -ArgumentList ($RecvDir+"/Receiver/$Toolname/udp")
+            Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockCreateDirForResults -ArgumentList ($SendDir+"/Sender/$Toolname/udp")
     
             # Copy the tool binaries to the remote machines
-            Copy-Item -Path "$toolpath/$Toolname" -Destination "$CommandsDir/Receiver/$Toolname" -ToSession $recvPSSession
-            Copy-Item -Path "$toolpath/$Toolname" -Destination "$CommandsDir/Sender/$Toolname" -ToSession $sendPSSession
+            Copy-Item -Path "$toolpath/$Toolname" -Destination "$RecvDir/Receiver/$Toolname" -ToSession $recvPSSession
+            Copy-Item -Path "$toolpath/$Toolname" -Destination "$SendDir/Sender/$Toolname" -ToSession $sendPSSession
     
             # Enable execution of tool binaries 
-            Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockEnableToolPermissions -ArgumentList "$CommandsDir/Receiver/$Toolname/$Toolname"
-            Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockEnableToolPermissions -ArgumentList "$CommandsDir/Sender/$Toolname/$Toolname"
+            Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockEnableToolPermissions -ArgumentList "$RecvDir/Receiver/$Toolname/$Toolname"
+            Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockEnableToolPermissions -ArgumentList "$SendDir/Sender/$Toolname/$Toolname"
             
             # allow multiple ports in firewall
             Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockEnableFirewallRules -ArgumentList ("$FirewallPortMin`:$FirewallPortMax/tcp", $RecvComputerCreds)
@@ -402,25 +408,28 @@ Function ProcessToolCommands{
             Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockTaskKill -ArgumentList $Toolname
             Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockTaskKill -ArgumentList $Toolname
 
+            # get number of commands to run
+            $commandTotal = (Get-Content $recvCmdFile | Measure-Object -Lines).Lines
+            $commandCount = 0
             $recvCommands = [System.IO.File]::OpenText($recvCmdFile)
             $sendCommands = [System.IO.File]::OpenText($sendCmdFile)
             $sw = [diagnostics.stopwatch]::StartNew()
     
             while(($null -ne ($recvCmd = $recvCommands.ReadLine())) -and ($null -ne ($sendCmd = $sendCommands.ReadLine()))) {
-    
+                $commandCount = $commandCount + 1
                 #change the command to add path to tool
-                $recvCmd =  $recvCmd -ireplace [regex]::Escape("./$Toolname"), "$CommandsDir/$Toolname/$Toolname"
-                $sendCmd =  $sendCmd -ireplace [regex]::Escape("./$Toolname"), "$CommandsDir/$Toolname/$Toolname"
+                $recvCmd =  $recvCmd -ireplace [regex]::Escape("./$Toolname"), "$RecvDir/$Toolname/$Toolname"
+                $sendCmd =  $sendCmd -ireplace [regex]::Escape("./$Toolname"), "$SendDir/$Toolname/$Toolname"
                 
                 # Work here to invoke recv commands
                 # Since we want the files to get generated under a subfolder, we replace the path to include the subfolder
-                $recvCmd =  $recvCmd -ireplace [regex]::Escape($CommandsDir), "$CommandsDir/Receiver"
+                $recvCmd =  $recvCmd -ireplace [regex]::Escape($CommandsDir), "$RecvDir/Receiver"
                 LogWrite "Invoking Cmd - Machine: $recvComputerName Command: $recvCmd" 
                 $recvJob = Invoke-Command -Session $recvPSSession -ScriptBlock ([Scriptblock]::Create($recvCmd)) -AsJob 
     
                 # Work here to invoke send commands
                 # Since we want the files to get generated under a subfolder, we replace the path to include the subfolder
-                $sendCmd =  $sendCmd -ireplace [regex]::Escape($CommandsDir), "$CommandsDir/Sender"
+                $sendCmd =  $sendCmd -ireplace [regex]::Escape($CommandsDir), "$SendDir/Sender"
                 LogWrite "Invoking Cmd - Machine: $sendComputerName Command: $sendCmd" 
                 $sendJob = Invoke-Command -Session $sendPSSession -ScriptBlock ([Scriptblock]::Create($sendCmd)) -AsJob 
                 # non blocking loop to check if the process made a clean exit
@@ -429,6 +438,8 @@ Function ProcessToolCommands{
                 # For tools such as ntttcp, we may need to add additional #s for runtime, wu and cd times 
                 [int] $timeout = GetActualTimeOutValue -AdditionalTimeout $TimeoutValueBetweenCommandPairs -Line $sendCmd
                 LogWrite "Waiting for $timeout seconds ..."
+                # Updating progress for user
+                Write-Host "Invoking $commandCount/$commandTotal commands for $Toolname and waiting for $timeout seconds..."
                 $sw.Reset()
                 $sw.Start()
                 # check job status until job is done running
@@ -465,21 +476,21 @@ Function ProcessToolCommands{
             LogWrite "Test runs completed. Collecting results..."
 
             # remove tool binaries because no need to copy
-            Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockRemoveBinaries -ArgumentList "$CommandsDir/Receiver/$Toolname/$Toolname" 
-            Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockRemoveBinaries -ArgumentList "$CommandsDir/Sender/$Toolname/$Toolname"
+            Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockRemoveBinaries -ArgumentList "$RecvDir/Receiver/$Toolname/$Toolname" 
+            Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockRemoveBinaries -ArgumentList "$SendDir/Sender/$Toolname/$Toolname"
     
             if ($BZip -eq $true) {
                 #Zip the files on remote machines
                 LogWrite "Zipping up results..."
-                Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockCreateZip -ArgumentList ("$CommandsDir/Receiver/$Toolname", "$CommandsDir/Recv.zip")
-                Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockCreateZip -ArgumentList ("$CommandsDir/Sender/$Toolname", "$CommandsDir/Send.zip")
+                Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockCreateZip -ArgumentList ("$RecvDir/Receiver/$Toolname", "$RecvDir/Recv.zip")
+                Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockCreateZip -ArgumentList ("$SendDir/Sender/$Toolname", "$SendDir/Send.zip")
      
                 Remove-Item -Force -Path ("{0}/{1}_Receiver.zip" -f $CommandsDir, $Toolname) -Recurse -ErrorAction SilentlyContinue
                 Remove-Item -Force -Path ("{0}/{1}_Sender.zip" -f $CommandsDir, $Toolname) -Recurse -ErrorAction SilentlyContinue
     
                 #copy the zip files from remote machines to the current (orchestrator) machines
-                Copy-Item -Path "$CommandsDir/Recv.zip" -Destination ("{0}/{1}_Receiver.zip" -f $CommandsDir, $Toolname) -FromSession $recvPSSession -Force
-                Copy-Item -Path "$CommandsDir/Send.zip" -Destination ("{0}/{1}_Sender.zip" -f $CommandsDir, $Toolname) -FromSession $sendPSSession -Force
+                Copy-Item -Path "$RecvDir/Recv.zip" -Destination ("{0}/{1}_Receiver.zip" -f $CommandsDir, $Toolname) -FromSession $recvPSSession -Force
+                Copy-Item -Path "$SendDir/Send.zip" -Destination ("{0}/{1}_Sender.zip" -f $CommandsDir, $Toolname) -FromSession $sendPSSession -Force
     
                 Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockRemoveFileFolder -ArgumentList "$CommandsDir/Recv.zip"
                 Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockRemoveFileFolder -ArgumentList "$CommandsDir/Send.zip"
@@ -499,21 +510,21 @@ Function ProcessToolCommands{
                 #clean up the folders and files we created
                 if($recvFolderExists -eq $false) {
                      # The folder never existed in the first place. we need to clean up the directories we created
-                     Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockRemoveFolderTree -ArgumentList "$CommandsDir"
+                     Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockRemoveFolderTree -ArgumentList "$RecvDir"
                 } else {
                     # this folder existed earlier on the machine. Leave the directory alone
                     # Remove just the child directories and the files we created. 
-                    Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockRemoveFileFolder -ArgumentList "$CommandsDir/Receiver"
+                    Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockRemoveFileFolder -ArgumentList "$RecvDir/Receiver"
                 }
     
                 LogWrite "Cleaning up folders on Machine: $sendComputerName"
     
                 if($sendFolderExists -eq $false) {
-                     Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockRemoveFolderTree -ArgumentList "$CommandsDir"
+                     Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockRemoveFolderTree -ArgumentList "$SendDir"
                 } else {
                     # this folder existed earlier on the machine. Leave the directory alone
                     # Remove just the child directories and the files we created. Leave the directory alone
-                    Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockRemoveFileFolder -ArgumentList "$CommandsDir/Sender"
+                    Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockRemoveFileFolder -ArgumentList "$SendDir/Sender"
                 }
             } # if ($Bcleanup -eq $true)
             $gracefulCleanup = $True

@@ -37,7 +37,8 @@ function banner {
 function test_recv {
     [CmdletBinding()]
     Param(
-        [parameter(Mandatory=$true)]   [int]    $Port
+        [parameter(Mandatory=$true)]   [int]    $Port,
+        [parameter(Mandatory=$true)]   [String] $RecvDir
     )
     [string] $cmd = "./lagscope -r -p$Port"
     Write-Output $cmd | Out-File -Encoding ascii -Append $g_log
@@ -54,14 +55,16 @@ function test_send {
         [parameter(Mandatory=$false)]  [String] $Options,
         [parameter(Mandatory=$true)]   [String] $OutDir,
         [parameter(Mandatory=$true)]   [String] $Fname,
-        [parameter(Mandatory=$false)]  [bool]   $NoDumpParam = $false
+        [parameter(Mandatory=$false)]  [bool]   $NoDumpParam = $false,
+        [parameter(Mandatory=$true)]   [String] $SendDir
+
     )
 
     #[int] $msgbytes = 4  #lagscope default is 4B, no immediate need to specify.
     [int] $rangeus  = 10
     [int] $rangemax = 98
 
-    [string] $out        = (Join-Path -Path $OutDir -ChildPath "$Fname")
+    [string] $out        = (Join-Path -Path $SendDir -ChildPath "$Fname")
     [string] $cmd = "./lagscope $Iter -s`"$g_DestIp`" -p$Port -V -H -c$rangemax -l$rangeus -P`"$out.per.json`" -R`"$out.data.csv`" > `"$out.txt`""
     Write-Output $cmd | Out-File -Encoding ascii -Append $g_log
     Write-Output $cmd | Out-File -Encoding ascii -Append $g_logSend
@@ -71,7 +74,10 @@ function test_send {
 function test_lagscope_generate {
     [CmdletBinding()]
     Param(
-        [parameter(Mandatory=$true)] [String] $OutDir
+        [parameter(Mandatory=$true)] [String] $OutDir,
+        [parameter(Mandatory=$true)]  [string] $SendDir,
+        [parameter(Mandatory=$true)]  [string] $RecvDir
+
     )
 
     # Normalize output directory
@@ -85,8 +91,8 @@ function test_lagscope_generate {
     for ($i=0; $i -lt $g_iters; $i++) {
         [int] $portstart = $tmp + ($i * $g_iters)
 
-        test_send -Iter "-n$iter" -Port $portstart -OutDir $dir -Fname "tcp.i$iter.iter$i"
-        test_recv -Port $portstart
+        test_send -Iter "-n$iter" -Port $portstart -OutDir $dir -Fname "tcp.i$iter.iter$i" -SendDir $SendDir
+        test_recv -Port $portstart -RecvDir $RecvDir
     }
 
     # Transactions per 10s
@@ -98,8 +104,8 @@ function test_lagscope_generate {
         [int] $portstart = $tmp + ($i * $g_iters)
         
         # Default
-        test_send -Iter "-t$sec" -Port $portstart -Options "" -OutDir $dir -Fname "tcp.t$sec.iter$i"
-        test_recv -Port $portstart
+        test_send -Iter "-t$sec" -Port $portstart -Options "" -OutDir $dir -Fname "tcp.t$sec.iter$i" -SendDir $SendDir
+        test_recv -Port $portstart -RecvDir $RecvDir
         
     }
 } # test_lagscope_generate()
@@ -112,7 +118,10 @@ function test_main {
         [parameter(Mandatory=$false)] [Int]    $Iterations = 1,
         [parameter(Mandatory=$true)]  [string] $DestIp,
         [parameter(Mandatory=$true)]  [string] $SrcIp,
-        [parameter(Mandatory=$true)]  [ValidateScript({Test-Path $_ -PathType Container})] [String] $OutDir = "" 
+        [parameter(Mandatory=$true)]  [ValidateScript({Test-Path $_ -PathType Container})] [String] $OutDir = "",
+        [parameter(Mandatory=$true)]  [string] $DestDir,
+        [parameter(Mandatory=$true)]  [string] $SrcDir
+
     )
     input_display
     
@@ -120,14 +129,16 @@ function test_main {
     [string] $g_DestIp  = $DestIp.Trim()
     [string] $g_SrcIp   = $SrcIp.Trim()
     [string] $dir       = (Join-Path -Path $OutDir -ChildPath "lagscope")  
-    [string] $g_log     = "$dir\LAGSCOPE.Commands.txt"
-    [string] $g_logSend = "$dir\LAGSCOPE.Commands.Send.txt"
-    [string] $g_logRecv = "$dir\LAGSCOPE.Commands.Recv.txt" 
+    [string] $g_log     = "$dir/LAGSCOPE.Commands.txt"
+    [string] $g_logSend = "$dir/LAGSCOPE.Commands.Send.txt"
+    [string] $g_logRecv = "$dir/LAGSCOPE.Commands.Recv.txt" 
+    [string] $sendDir   = (Join-Path -Path $SrcDir -ChildPath "lagscope")
+    [string] $recvDir   = (Join-Path -Path $DestDir -ChildPath "lagscope")
 
     New-Item -ItemType directory -Path $dir | Out-Null
     
     # Optional - Edit spaces in output path for Invoke-Expression compatibility
     # $dir  = $dir  -replace ' ','` '
 
-    test_lagscope_generate -OutDir $dir
+    test_lagscope_generate -OutDir $dir -SendDir $sendDir -RecvDir $recvDir
 } test_main @PSBoundParameters # Entry Point

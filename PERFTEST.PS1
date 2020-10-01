@@ -8,7 +8,10 @@ Param(
     [parameter(Mandatory=$false)] [ValidateSet('Sampling','Testing')] [string] $Config = "Sampling",
     [parameter(Mandatory=$true)]  [string] $DestIp,
     [parameter(Mandatory=$true)]  [string] $SrcIp,
-    [parameter(Mandatory=$true)]  [ValidateScript({Test-Path $_ -PathType Container})] [String] $OutDir = "" 
+    [parameter(Mandatory=$true)]  [String] $OutDir = "",
+    [parameter(Mandatory=$true)]  [string] $DestUserName,
+    [parameter(Mandatory=$true)]  [string] $SrcUserName
+
 )
 $scriptName = $MyInvocation.MyCommand.Name 
 
@@ -89,7 +92,9 @@ function test_main {
         [parameter(Mandatory=$false)] [ValidateSet('Sampling','Testing')] [string] $Config = "Sampling",
         [parameter(Mandatory=$true)]  [string] $DestIp,
         [parameter(Mandatory=$true)]  [string] $SrcIp,
-        [parameter(Mandatory=$true)]  [ValidateScript({Test-Path $_ -PathType Container})] [String] $OutDir = "" 
+        [parameter(Mandatory=$true)]  [String] $OutDir = "",
+        [parameter(Mandatory=$true)]  [string] $DestUserName,
+        [parameter(Mandatory=$true)]  [string] $SrcUserName
     )
     Clear-Host
     input_display
@@ -107,11 +112,16 @@ function test_main {
     [string] $g_DestIp    = $DestIp
     [string] $g_SrcIp     = $SrcIp
 
+    $DestDir = "/home/$DestUserName/$OutDir"
+    $SrcDir = "/home/$SrcUserName/$OutDir"
+    $OutDir = "$HOME/$OutDir"
+
     $workDir = env_normalize -OutDir $OutDir
     Write-Host $workDir
 
     env_destroy -OutDir $workDir
     env_create  -OutDir $workDir
+
 
     # lagscope does not have detail 
     ./lagscope/lagscope.TESTGEN.ps1   -DestIp $g_DestIp -SrcIp $g_SrcIp -OutDir $workDir -Iterations $g_iters
