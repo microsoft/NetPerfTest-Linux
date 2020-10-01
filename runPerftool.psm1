@@ -409,7 +409,7 @@ Function ProcessToolCommands{
             Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockTaskKill -ArgumentList $Toolname
 
             # get number of commands to run
-            $commandTotal = (Get-Content $recvCmdFile | Measure-Object -Lines).Lines
+            $commandTotal = (Get-Content $recvCmdFile | Measure-Object -Line).Lines
             $commandCount = 0
             $recvCommands = [System.IO.File]::OpenText($recvCmdFile)
             $sendCommands = [System.IO.File]::OpenText($sendCmdFile)
