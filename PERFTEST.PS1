@@ -124,9 +124,6 @@ function test_main {
     [string] $g_DestIp    = $DestIp
     [string] $g_SrcIp     = $SrcIp
 
-    $workDir = env_normalize -OutDir $OutDir
-    Write-Host $workDir
-
     $DestDir = remote_env_normalize "/home/$DestUserName/$OutDir"
     $SrcDir = remote_env_normalize "/home/$SrcUserName/$OutDir"
     $OutDir = "$HOME/$OutDir"
