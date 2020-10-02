@@ -296,6 +296,12 @@ Function ProcessCommands{
 .PARAMETER FirewallPortMax
     Optional maximum server port number used for iteration tests to allow firewall to accept pings from
 
+.PARAMETER RecvDir
+    Location of folder on receiver computer that is going to have commands and store results
+
+.PARAMETER SendDir
+    Location of folder on sender computer that is going to have commands and store results
+
 #>
 Function ProcessToolCommands{
     param(

@@ -2,8 +2,7 @@
 
 ## Description
 
-NetPerfTest-Linux is a collection of tools used to generate tests, run tests, and collect network configuration,
-and performance statistics for diagnosis of networking performance issues. 
+NetPerfTest-Linux is a collection of tools used to generate tests, run tests, and collect network configuration, and performance statistics for diagnosis of networking performance issues. 
 
 ## Pre-Requisites
 These tools are necessary the run the PowerShell scripts in NetPerfTest. Some tools like PuttY, ufw, and SSH client, may already be installed on Linux Systems by default.
@@ -22,8 +21,7 @@ Now that the folder is created, we're ready to generate the commands using the P
 ./PERFTEST.PS1 -DestIp "DestinationMachineIP" -SrcIP "SourceMachineIP" -OutDir "Temp/MyDirectoryForTesting" -DestUserName "DestinationUserName" -SrcUserName "SourceUserName"
 ```
 
-Note that if you include the home and user directory (ej. /home/user), the username must be the same on the Source and 
-Destination machine you are testing.
+The OutDir folder should not contain the home path.
 
 ## Setup
 
@@ -52,10 +50,10 @@ For further help with this function, run ```Get-Help ProcessCommands```
 
 The command to run tests is:
 ```
-ProcessCommands -DestIp "DestinationMachineIP" -SrcIp "SourceMachineIP" -CommandsDir "/home/user/Temp/MyDirectoryForTesting/msdbg.CurrentMachineName.perftest" -SrcIpUserName SrcUserName -DestIpUserName DestUserName
+ProcessCommands -DestIp "DestinationMachineIP" -SrcIp "SourceMachineIP" -CommandsDir "Temp/MyDirectoryForTesting/msdbg.CurrentMachineName.perftest" -SrcIpUserName SrcUserName -DestIpUserName DestUserName
 ```
 
-You will be prompted for password for credentials of both the source and destination machine. It a Secure-string so your password will not be displayed or stored in clear text at any point.
+You will be prompted for password for credentials of both the source and destination machine. It a Secure-string so your password will not be displayed or stored in clear text at any point. Do not include the home path in the command directory
 
 ```PowerShell commands
 Import-Module -Force .\runPerftool.psm1
