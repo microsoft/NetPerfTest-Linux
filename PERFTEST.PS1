@@ -10,7 +10,8 @@ Param(
     [parameter(Mandatory=$true)]  [string] $SrcIp,
     [parameter(Mandatory=$true)]  [String] $OutDir = "",
     [parameter(Mandatory=$true)]  [string] $DestUserName,
-    [parameter(Mandatory=$true)]  [string] $SrcUserName
+    [parameter(Mandatory=$true)]  [string] $SrcUserName,
+    [parameter(Mandatory=$true)]  [string] $TestUserName
 
 )
 $scriptName = $MyInvocation.MyCommand.Name 
@@ -106,7 +107,8 @@ function test_main {
         [parameter(Mandatory=$true)]  [string] $SrcIp,
         [parameter(Mandatory=$true)]  [String] $OutDir = "",
         [parameter(Mandatory=$true)]  [string] $DestUserName,
-        [parameter(Mandatory=$true)]  [string] $SrcUserName
+        [parameter(Mandatory=$true)]  [string] $SrcUserName,
+        [parameter(Mandatory=$true)]  [string] $TestUserName
     )
     Clear-Host
     input_display
@@ -126,7 +128,7 @@ function test_main {
 
     $DestDir = remote_env_normalize "/home/$DestUserName/$OutDir"
     $SrcDir = remote_env_normalize "/home/$SrcUserName/$OutDir"
-    $OutDir = "$HOME/$OutDir"
+    $OutDir = "/home/$TestUserName/$OutDir"
 
     $workDir = env_normalize -OutDir $OutDir
     Write-Host $workDir

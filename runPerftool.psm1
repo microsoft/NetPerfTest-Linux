@@ -158,6 +158,9 @@ $ScriptBlockRemoveBinaries = {
     Required Parameter. Gets password needed to connect to SrcIp Machine. 
     Password will be stored as Secure String and chars will not be displayed on the console
 
+.PARAMETER TestUserName
+    Required Parameter. Gets username of current machine to get correct path to commands 
+
 .PARAMETER CommandsDir
     Required Parameter that specifies the location of the folder with the auto generated commands to run.
 
@@ -214,6 +217,8 @@ Function ProcessCommands{
     [string] $SrcIpUserName,
     [Parameter(Mandatory=$True, Position=0, HelpMessage="Src Machine Password?")]
     [SecureString]$SrcIpPassword,
+    [Parameter(Mandatory=$True, Position=0, HelpMessage="Test Machine Username?")]
+    [string] $TestUserName,
     [Parameter(Mandatory=$False)] [string]$Bcleanup=$True,
     [Parameter(Mandatory=$False)]$ZipResults=$True,
     [Parameter(Mandatory=$False)]$TimeoutValueInSeconds=90,
@@ -228,17 +233,17 @@ Function ProcessCommands{
 
     $recvDir = "/home/$DestIpUserName/$CommandsDir"
     $sendDir = "/home/$SrcIpUserName/$CommandsDir"
-    $CommandsDir = "$HOME/$CommandsDir"
+    $CommandsDir = "/home/$TestUserName/$CommandsDir"
 
     [PSCredential] $sendIPCreds = New-Object System.Management.Automation.PSCredential($SrcIpUserName, $SrcIpPassword)
 
     [PSCredential] $recvIPCreds = New-Object System.Management.Automation.PSCredential($DestIpUserName, $DestIpPassword)
 
     LogWrite "Processing ntttcp commands for Linux" $true
-    ProcessToolCommands -Toolname "ntttcp" -RecvComputerName $recvComputerName -RecvComputerCreds $recvIPCreds -SendComputerName $sendComputerName -SendComputerCreds $sendIPCreds -CommandsDir $CommandsDir -Bcleanup $Bcleanup -BZip $ZipResults -TimeoutValueBetweenCommandPairs $TimeoutValueInSeconds -PollTimeInSeconds $PollTimeInSeconds -ListeningPort $ListeningPort -FirewallPortMin $FirewallPortMin -FirewallPortMax $FirewallPortMax -RecvDir $recvDir -SendDir $sendDir
+    ProcessToolCommands -Toolname "ntttcp" -RecvComputerName $recvComputerName -RecvComputerCreds $recvIPCreds -SendComputerName $sendComputerName -SendComputerCreds $sendIPCreds -TestUserName $TestUserName -CommandsDir $CommandsDir -Bcleanup $Bcleanup -BZip $ZipResults -TimeoutValueBetweenCommandPairs $TimeoutValueInSeconds -PollTimeInSeconds $PollTimeInSeconds -ListeningPort $ListeningPort -FirewallPortMin $FirewallPortMin -FirewallPortMax $FirewallPortMax -RecvDir $recvDir -SendDir $sendDir
 
     LogWrite "Processing lagscope commands for Linux" $true
-    ProcessToolCommands -Toolname "lagscope" -RecvComputerName $recvComputerName -RecvComputerCreds $recvIPCreds -SendComputerName $sendComputerName -SendComputerCreds $sendIPCreds -CommandsDir $CommandsDir -Bcleanup $Bcleanup -BZip $ZipResults -TimeoutValueBetweenCommandPairs $TimeoutValueInSeconds -PollTimeInSeconds $PollTimeInSeconds -ListeningPort $ListeningPort -FirewallPortMin $FirewallPortMin -FirewallPortMax $FirewallPortMax -RecvDir $recvDir -SendDir $sendDir
+    ProcessToolCommands -Toolname "lagscope" -RecvComputerName $recvComputerName -RecvComputerCreds $recvIPCreds -SendComputerName $sendComputerName -SendComputerCreds $sendIPCreds -TestUserName $TestUserName -CommandsDir $CommandsDir -Bcleanup $Bcleanup -BZip $ZipResults -TimeoutValueBetweenCommandPairs $TimeoutValueInSeconds -PollTimeInSeconds $PollTimeInSeconds -ListeningPort $ListeningPort -FirewallPortMin $FirewallPortMin -FirewallPortMax $FirewallPortMax -RecvDir $recvDir -SendDir $sendDir
 
     LogWrite "ProcessCommands Done!" $true
     Move-Item -Force -Path $Logfile -Destination "$CommandsDir" -ErrorAction Ignore
@@ -259,6 +264,9 @@ Function ProcessCommands{
 
 .PARAMETER SendComputerName
     The IpAddr of the sender machine that's going to send data for the duration of the throughput tests
+
+.PARAMETER TestUserName
+    Required Parameter. Gets username of current machine to get correct path to commands 
 
 .PARAMETER CommandsDir
     The location of the folder that's going to have the auto generated commands for the tool.
@@ -312,6 +320,7 @@ Function ProcessToolCommands{
         [Parameter(Mandatory=$False)] [string]$Toolname = "ntttcp", 
         [Parameter(Mandatory=$False)] [PSCredential] $SendComputerCreds = [System.Management.Automation.PSCredential]::Empty,
         [Parameter(Mandatory=$False)] [PSCredential] $RecvComputerCreds = [System.Management.Automation.PSCredential]::Empty,
+        [Parameter(Mandatory=$True)] [string] $TestUserName,
         [Parameter(Mandatory=$True)] [bool]$BZip,
         [Parameter(Mandatory=$False)] [int] $TimeoutValueBetweenCommandPairs = 60,
         [Parameter(Mandatory=$False)] [int] $PollTimeInSeconds = 5,
@@ -330,7 +339,7 @@ Function ProcessToolCommands{
     
         $toolpath = "./{0}" -f $Toolname
     
-        $homePath = $HOME
+        $homePath = "/home/$TestUserName"
         $keyFilePath = "$homePath/.ssh/netperf_rsa"
         $pubKeyFilePath = "$homePath/.ssh/netperf_rsa.pub"
 
@@ -353,7 +362,7 @@ Function ProcessToolCommands{
             Remove-Item -Path $sshCommandFilePath -ErrorAction SilentlyContinue -Force
         }
         Add-Content -Path $sshCommandFilePath -Value ("umask 077; test -d .ssh || mkdir .ssh ; echo `"" + (Get-Content $pubKeyFilePath) + "`" >> .ssh/authorized_keys")
-        chmod -R 777 $sshCommandFilePath 
+        chmod 777 $sshCommandFilePath 
         try {
             # Establish the Remote PS session with Receiver
             Write-Output "n" | plink -P $ListeningPort $RecvComputerName -l $RecvComputerCreds.GetNetworkCredential().UserName -pw $RecvComputerCreds.GetNetworkCredential().Password -m $sshCommandFilePath | Out-Null
