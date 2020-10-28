@@ -66,6 +66,7 @@ $ScriptBlockCreateDirForResults = {
     param ($Cmddir)
     if (!(Test-Path $Cmddir)) {
         New-Item -ItemType Directory -Force -Path "$Cmddir" | Out-Null
+        chmod 777 $Cmddir
     }
     return $Exists
 } # $ScriptBlockCreateDirForResults()
@@ -362,6 +363,7 @@ Function ProcessToolCommands{
             Remove-Item -Path $sshCommandFilePath -ErrorAction SilentlyContinue -Force
         }
         Add-Content -Path $sshCommandFilePath -Value ("umask 077; test -d .ssh || mkdir .ssh ; echo `"" + (Get-Content $pubKeyFilePath) + "`" >> .ssh/authorized_keys")
+        Start-Sleep -Seconds 60
         chmod 777 $sshCommandFilePath 
         try {
             # Establish the Remote PS session with Receiver
