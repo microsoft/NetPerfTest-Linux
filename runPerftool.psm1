@@ -64,9 +64,24 @@ $ScriptBlockTaskKill = {
 # Set up a directory on the remote machines for results gathering.
 $ScriptBlockCreateDirForResults = {
     param ($Cmddir)
-    if (!(Test-Path $Cmddir)) {
-        mkdir -p -m 777 "$Cmddir" 
+    $folders = $Cmddir.Split('/')
+
+    $folderToCreate = ""
+    $Exists = Test-Path -Path $Cmddir
+
+    for ($i=1; $i -le $folders.count; $i++) {
+
+        $currFolder = $folders[$i]
+        $folderToCreate = "$folderToCreate/$currFolder"
+
+        if (!(Test-Path $folderToCreate)) {
+            New-Item -Force -ItemType Directory -Path $folderToCreate
+        }   
+
     }
+    # if (!(Test-Path $Cmddir)) {
+    #     mkdir -p -m 777 "$Cmddir" 
+    # }
     return $Exists
 } # $ScriptBlockCreateDirForResults()
 
