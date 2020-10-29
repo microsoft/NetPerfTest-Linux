@@ -40,7 +40,7 @@ Param ([Int]$AdditionalTimeout, [string] $Line)
 
 $ScriptBlockEnableToolPermissions = {
     param ($remoteToolPath, $creds)
-    sudo chmod 777 $remoteToolPath
+    Write-Output $creds.GetNetworkCredential().Password | sudo -S chmod 777 $remoteToolPath
 } # $ScriptBlockEnableToolPermissions()
 
 $ScriptBlockCleanupFirewallRules = {
@@ -75,7 +75,7 @@ $ScriptBlockCreateDirForResults = {
 
         if (!(Test-Path $folderToCreate)) {
             New-Item -Force -ItemType Directory -Path $folderToCreate
-            sudo chmod 777 $folderToCreate
+            Write-Output $creds.GetNetworkCredential().Password | sudo -S chmod 777 $folderToCreate
         }   
 
     }
@@ -426,8 +426,8 @@ Function ProcessToolCommands{
             Copy-Item -Path "$toolpath/$Toolname" -Destination "$SendDir/Sender/$Toolname" -ToSession $sendPSSession
     
             # Enable execution of tool binaries 
-            Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockEnableToolPermissions -ArgumentList "$RecvDir/Receiver/$Toolname/$Toolname, $RecvComputerCreds"
-            Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockEnableToolPermissions -ArgumentList "$SendDir/Sender/$Toolname/$Toolname, $SendComputerCreds"
+            Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockEnableToolPermissions -ArgumentList ("$RecvDir/Receiver/$Toolname/$Toolname", $RecvComputerCreds)
+            Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockEnableToolPermissions -ArgumentList ("$SendDir/Sender/$Toolname/$Toolname", $SendComputerCreds)
             
             # allow multiple ports in firewall
             Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockEnableFirewallRules -ArgumentList ("$FirewallPortMin`:$FirewallPortMax/tcp", $RecvComputerCreds)
@@ -579,10 +579,10 @@ Function ProcessToolCommands{
     
             LogWrite "Cleaning up the firewall rules that were created as part of script run..."
             # Clean up the firewall rules that this script created
-            Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockCleanupFirewallRules -ArgumentList ("50000:50512/tcp", $RecvComputerCreds)
-            Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockCleanupFirewallRules -ArgumentList ("50000:50512/tcp", $SendComputerCreds)
-            Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockCleanupFirewallRules -ArgumentList ("50000:50512/udp", $RecvComputerCreds)
-            Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockCleanupFirewallRules -ArgumentList ("50000:50512/udp", $SendComputerCreds)
+            Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockCleanupFirewallRules -ArgumentList ("$FirewallPortMin`:$FirewallPortMax/tcp", $RecvComputerCreds)
+            Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockCleanupFirewallRules -ArgumentList ("$FirewallPortMin`:$FirewallPortMax/tcp", $SendComputerCreds)
+            Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockCleanupFirewallRules -ArgumentList ("$FirewallPortMin`:$FirewallPortMax/udp", $RecvComputerCreds)
+            Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockCleanupFirewallRules -ArgumentList ("$FirewallPortMin`:$FirewallPortMax/udp", $SendComputerCreds)
             
             LogWrite "Cleaning up public private key and known hosts that were created as part of script run"
             # Delete authorized host from receiver and sender computer
