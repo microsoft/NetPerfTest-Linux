@@ -65,8 +65,7 @@ $ScriptBlockTaskKill = {
 $ScriptBlockCreateDirForResults = {
     param ($Cmddir)
     if (!(Test-Path $Cmddir)) {
-        New-Item -ItemType Directory -Force -Path "$Cmddir" | Out-Null
-        chmod -R 777 $Cmddir
+        mkdir -p -m 777 "$Cmddir" 
     }
     return $Exists
 } # $ScriptBlockCreateDirForResults()
