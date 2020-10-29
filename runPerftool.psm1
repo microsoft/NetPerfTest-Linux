@@ -40,7 +40,7 @@ Param ([Int]$AdditionalTimeout, [string] $Line)
 
 $ScriptBlockEnableToolPermissions = {
     param ($remoteToolPath, $creds)
-    Write-Output $creds.GetNetworkCredential().Password | sudo -S chmod 777 $remoteToolPath
+    chmod 777 $remoteToolPath
 } # $ScriptBlockEnableToolPermissions()
 
 $ScriptBlockCleanupFirewallRules = {
@@ -75,7 +75,7 @@ $ScriptBlockCreateDirForResults = {
 
         if (!(Test-Path $folderToCreate)) {
             New-Item -Force -ItemType Directory -Path $folderToCreate
-            Write-Output $creds.GetNetworkCredential().Password | sudo -S chmod 777 $folderToCreate
+            chmod 777 $folderToCreate
         }   
 
     }
