@@ -39,8 +39,8 @@ Param ([Int]$AdditionalTimeout, [string] $Line)
 #===============================================
 
 $ScriptBlockEnableToolPermissions = {
-    param ($remoteToolPath)
-    chmod 777 $remoteToolPath
+    param ($remoteToolPath, $creds)
+    Write-Output $creds.GetNetworkCredential().Password | sudo -S chmod 777 $remoteToolPath
 } # $ScriptBlockEnableToolPermissions()
 
 $ScriptBlockCleanupFirewallRules = {
@@ -63,19 +63,19 @@ $ScriptBlockTaskKill = {
 
 # Set up a directory on the remote machines for results gathering.
 $ScriptBlockCreateDirForResults = {
-    param ($Cmddir)
+    param ($Cmddir, $creds)
     $folders = $Cmddir.Split('/')
 
     $folderToCreate = ""
     $Exists = Test-Path -Path $Cmddir
 
     for ($i=1; $i -le $folders.count; $i++) {
-
         $currFolder = $folders[$i]
         $folderToCreate = "$folderToCreate/$currFolder"
 
         if (!(Test-Path $folderToCreate)) {
             New-Item -Force -ItemType Directory -Path $folderToCreate
+            Write-Output $creds.GetNetworkCredential().Password | sudo -S chmod 777 $folderToCreate
         }   
 
     }
@@ -408,26 +408,26 @@ Function ProcessToolCommands{
             $recvCmdFile = Join-Path -Path $CommandsDir -ChildPath "/$Toolname/$ToolnameUpper.Commands.Recv.txt"
     
             # Ensure that remote machines have the directory created for results gathering. 
-            $recvFolderExists = Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockCreateDirForResults -ArgumentList ($RecvDir)
-            $sendFolderExists = Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockCreateDirForResults -ArgumentList ($SendDir)
+            $recvFolderExists = Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockCreateDirForResults -ArgumentList ($RecvDir, $RecvComputerCreds)
+            $sendFolderExists = Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockCreateDirForResults -ArgumentList ($SendDir, $SendComputerCreds)
     
             # Clean up the Receiver/Sender folders on remote machines, if they exist so that we dont capture any stale logs
             Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockRemoveFileFolder -ArgumentList "$RecvDir/Receiver"
             Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockRemoveFileFolder -ArgumentList "$SendDir/Sender"
     
             #Create dirs and subdirs for each of the supported tools
-            Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockCreateDirForResults -ArgumentList ($RecvDir+"/Receiver/$Toolname/tcp")
-            Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockCreateDirForResults -ArgumentList ($SendDir+"/Sender/$Toolname/tcp")
-            Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockCreateDirForResults -ArgumentList ($RecvDir+"/Receiver/$Toolname/udp")
-            Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockCreateDirForResults -ArgumentList ($SendDir+"/Sender/$Toolname/udp")
+            Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockCreateDirForResults -ArgumentList ($RecvDir+"/Receiver/$Toolname/tcp", $RecvComputerCreds)
+            Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockCreateDirForResults -ArgumentList ($SendDir+"/Sender/$Toolname/tcp", $SendComputerCreds)
+            Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockCreateDirForResults -ArgumentList ($RecvDir+"/Receiver/$Toolname/udp", $RecvComputerCreds)
+            Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockCreateDirForResults -ArgumentList ($SendDir+"/Sender/$Toolname/udp", $SendComputerCreds)
     
             # Copy the tool binaries to the remote machines
             Copy-Item -Path "$toolpath/$Toolname" -Destination "$RecvDir/Receiver/$Toolname" -ToSession $recvPSSession
             Copy-Item -Path "$toolpath/$Toolname" -Destination "$SendDir/Sender/$Toolname" -ToSession $sendPSSession
     
             # Enable execution of tool binaries 
-            Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockEnableToolPermissions -ArgumentList "$RecvDir/Receiver/$Toolname/$Toolname"
-            Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockEnableToolPermissions -ArgumentList "$SendDir/Sender/$Toolname/$Toolname"
+            Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockEnableToolPermissions -ArgumentList "$RecvDir/Receiver/$Toolname/$Toolname, $RecvComputerCreds"
+            Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockEnableToolPermissions -ArgumentList "$SendDir/Sender/$Toolname/$Toolname, $SendComputerCreds"
             
             # allow multiple ports in firewall
             Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockEnableFirewallRules -ArgumentList ("$FirewallPortMin`:$FirewallPortMax/tcp", $RecvComputerCreds)
