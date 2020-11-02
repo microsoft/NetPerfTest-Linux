@@ -371,7 +371,7 @@ Function ProcessToolCommands{
                 New-Item -Path "$homePath/.ssh" -ItemType Directory
             }
             Write-Output $keyFilePath | ssh-keygen --% -q -t rsa -N ""
-            chmod 600 $keyFilePath
+            sudo chmod 600 $keyFilePath
         }
         # create command to copy public key to receiver and sender computer
         if ((Test-Path $sshCommandFilePath) -eq $True) {
@@ -379,7 +379,7 @@ Function ProcessToolCommands{
         }
         Add-Content -Path $sshCommandFilePath -Value ("umask 077; test -d .ssh || mkdir .ssh ; echo `"" + (Get-Content $pubKeyFilePath) + "`" >> .ssh/authorized_keys")
         Start-Sleep -Seconds 60
-        chmod 777 $sshCommandFilePath 
+        sudo chmod 777 $sshCommandFilePath 
         try {
             # Establish the Remote PS session with Receiver
             Write-Output "n" | plink -P $ListeningPort $RecvComputerName -l $RecvComputerCreds.GetNetworkCredential().UserName -pw $RecvComputerCreds.GetNetworkCredential().Password -m $sshCommandFilePath | Out-Null
@@ -409,18 +409,18 @@ Function ProcessToolCommands{
             $recvCmdFile = Join-Path -Path $CommandsDir -ChildPath "/$Toolname/$ToolnameUpper.Commands.Recv.txt"
     
             # Ensure that remote machines have the directory created for results gathering. 
-            $recvFolderExists = Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockCreateDirForResults -ArgumentList ($RecvDir, $RecvComputerCreds)
-            $sendFolderExists = Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockCreateDirForResults -ArgumentList ($SendDir, $SendComputerCreds)
+            # $recvFolderExists = Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockCreateDirForResults -ArgumentList ($RecvDir, $RecvComputerCreds)
+            # $sendFolderExists = Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockCreateDirForResults -ArgumentList ($SendDir, $SendComputerCreds)
     
             # Clean up the Receiver/Sender folders on remote machines, if they exist so that we dont capture any stale logs
             Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockRemoveFileFolder -ArgumentList "$RecvDir/Receiver"
             Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockRemoveFileFolder -ArgumentList "$SendDir/Sender"
     
             #Create dirs and subdirs for each of the supported tools
-            Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockCreateDirForResults -ArgumentList ($RecvDir+"/Receiver/$Toolname/tcp", $RecvComputerCreds)
-            Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockCreateDirForResults -ArgumentList ($SendDir+"/Sender/$Toolname/tcp", $SendComputerCreds)
-            Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockCreateDirForResults -ArgumentList ($RecvDir+"/Receiver/$Toolname/udp", $RecvComputerCreds)
-            Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockCreateDirForResults -ArgumentList ($SendDir+"/Sender/$Toolname/udp", $SendComputerCreds)
+            # Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockCreateDirForResults -ArgumentList ($RecvDir+"/Receiver/$Toolname/tcp", $RecvComputerCreds)
+            # Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockCreateDirForResults -ArgumentList ($SendDir+"/Sender/$Toolname/tcp", $SendComputerCreds)
+            # Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockCreateDirForResults -ArgumentList ($RecvDir+"/Receiver/$Toolname/udp", $RecvComputerCreds)
+            # Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockCreateDirForResults -ArgumentList ($SendDir+"/Sender/$Toolname/udp", $SendComputerCreds)
     
             # Copy the tool binaries to the remote machines
             Copy-Item -Path "$toolpath/$Toolname" -Destination "$RecvDir/Receiver/$Toolname" -ToSession $recvPSSession
