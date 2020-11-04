@@ -63,26 +63,10 @@ $ScriptBlockTaskKill = {
 
 # Set up a directory on the remote machines for results gathering.
 $ScriptBlockCreateDirForResults = {
-    param ($Cmddir, $creds)
-    $folders = $Cmddir.Split('/')
-
-    $folderToCreate = ""
-    $Exists = Test-Path -Path $Cmddir
-
-    for ($i=1; $i -le $folders.count; $i++) {
-
-        $currFolder = $folders[$i]
-        $folderToCreate = "$folderToCreate/$currFolder"
-
-        if (!(Test-Path $folderToCreate)) {
-            New-Item -Force -ItemType Directory -Path $folderToCreate
-            Write-Output $creds.GetNetworkCredential().Password | sudo -S chmod -R 777 $folderToCreate
-        }   
-
+    param ($Cmddir)
+    if (!(Test-Path $Cmddir)) {
+        New-Item -ItemType Directory -Force -Path "$Cmddir" | Out-Null
     }
-    # if (!(Test-Path $Cmddir)) {
-    #     mkdir -p -m 777 "$Cmddir" 
-    # }
     return $Exists
 } # $ScriptBlockCreateDirForResults()
 
@@ -409,18 +393,18 @@ Function ProcessToolCommands{
             $recvCmdFile = Join-Path -Path $CommandsDir -ChildPath "/$Toolname/$ToolnameUpper.Commands.Recv.txt"
     
             # Ensure that remote machines have the directory created for results gathering. 
-            $recvFolderExists = Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockCreateDirForResults -ArgumentList ($RecvDir, $RecvComputerCreds)
-            $sendFolderExists = Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockCreateDirForResults -ArgumentList ($SendDir, $SendComputerCreds)
+            $recvFolderExists = Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockCreateDirForResults -ArgumentList ($RecvDir)
+            $sendFolderExists = Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockCreateDirForResults -ArgumentList ($SendDir)
     
             # Clean up the Receiver/Sender folders on remote machines, if they exist so that we dont capture any stale logs
             Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockRemoveFileFolder -ArgumentList "$RecvDir/Receiver"
             Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockRemoveFileFolder -ArgumentList "$SendDir/Sender"
     
             #Create dirs and subdirs for each of the supported tools
-            Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockCreateDirForResults -ArgumentList ($RecvDir+"/Receiver/$Toolname/tcp", $RecvComputerCreds)
-            Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockCreateDirForResults -ArgumentList ($SendDir+"/Sender/$Toolname/tcp", $SendComputerCreds)
-            Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockCreateDirForResults -ArgumentList ($RecvDir+"/Receiver/$Toolname/udp", $RecvComputerCreds)
-            Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockCreateDirForResults -ArgumentList ($SendDir+"/Sender/$Toolname/udp", $SendComputerCreds)
+            Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockCreateDirForResults -ArgumentList ($RecvDir+"/Receiver/$Toolname/tcp")
+            Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockCreateDirForResults -ArgumentList ($SendDir+"/Sender/$Toolname/tcp")
+            Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockCreateDirForResults -ArgumentList ($RecvDir+"/Receiver/$Toolname/udp")
+            Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockCreateDirForResults -ArgumentList ($SendDir+"/Sender/$Toolname/udp")
     
             # Copy the tool binaries to the remote machines
             Copy-Item -Path "$toolpath/$Toolname" -Destination "$RecvDir/Receiver/$Toolname" -ToSession $recvPSSession
@@ -580,10 +564,10 @@ Function ProcessToolCommands{
     
             LogWrite "Cleaning up the firewall rules that were created as part of script run..."
             # Clean up the firewall rules that this script created
-            Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockCleanupFirewallRules -ArgumentList ("$FirewallPortMin`:$FirewallPortMax/tcp", $RecvComputerCreds)
-            Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockCleanupFirewallRules -ArgumentList ("$FirewallPortMin`:$FirewallPortMax/tcp", $SendComputerCreds)
-            Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockCleanupFirewallRules -ArgumentList ("$FirewallPortMin`:$FirewallPortMax/udp", $RecvComputerCreds)
-            Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockCleanupFirewallRules -ArgumentList ("$FirewallPortMin`:$FirewallPortMax/udp", $SendComputerCreds)
+            Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockCleanupFirewallRules -ArgumentList ("50000:50512/tcp", $RecvComputerCreds)
+            Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockCleanupFirewallRules -ArgumentList ("50000:50512/tcp", $SendComputerCreds)
+            Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockCleanupFirewallRules -ArgumentList ("50000:50512/udp", $RecvComputerCreds)
+            Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockCleanupFirewallRules -ArgumentList ("50000:50512/udp", $SendComputerCreds)
             
             LogWrite "Cleaning up public private key and known hosts that were created as part of script run"
             # Delete authorized host from receiver and sender computer
