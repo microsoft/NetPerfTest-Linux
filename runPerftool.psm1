@@ -371,7 +371,7 @@ Function ProcessToolCommands{
             start-sleep -seconds $credPropagationTimeInSecond
             $recvPSSession = New-PSSession -Port $ListeningPort -HostName $RecvComputerName -UserName ($RecvComputerCreds.GetNetworkCredential().UserName) -KeyFilePath $keyFilePath
     
-            if($recvPSsession -eq $null) {
+            if($null -eq $recvPSsession) {
                 LogWrite "Error connecting to Host: $($RecvComputerName)"
                 return 
             }
@@ -382,7 +382,7 @@ Function ProcessToolCommands{
             start-sleep -seconds $credPropagationTimeInSecond
             $sendPSSession = New-PSSession -Port $ListeningPort -HostName $SendComputerName -UserName $SendComputerCreds.GetNetworkCredential().UserName -KeyFilePath $keyFilePath
         
-            if($sendPSsession -eq $null) {
+            if($null -eq $sendPSsession) {
                 LogWrite "Error connecting to Host: $($SendComputerName)"
                 return
             }
@@ -461,9 +461,16 @@ Function ProcessToolCommands{
                 # check job status until job is done running
                 while (([math]::Round($sw.Elapsed.TotalSeconds,0)) -lt $timeout) {
                     start-sleep -seconds $PollTimeInSeconds
-                    if ($recvJob.State -eq "Completed" -and $sendJob.State -eq "Completed") {         
-                        LogWrite "$Toolname exited on both Src and Dest machines"
-                        break
+                    if ($Toolname -eq "lagscope") {
+                        if ($sendJob.State -eq "Completed") {         
+                            LogWrite "$Toolname exited on both Src machines"
+                            break
+                        }
+                    } else {
+                        if ($recvJob.State -eq "Completed" -and $sendJob.State -eq "Completed") {         
+                            LogWrite "$Toolname exited on both Src and Dest machines"
+                            break
+                        }
                     }
                 }
                 # check if job was completed
@@ -551,8 +558,8 @@ Function ProcessToolCommands{
         finally {
             if($gracefulCleanup -eq $False)
             {
-                if ($recvCommands -ne $null) {$recvCommands.close()}
-                if ($sendCommands -ne $null) {$sendCommands.close()}
+                if ($null -ne $recvCommands ) {$recvCommands.close()}
+                if ($null -ne $sendCommands) {$sendCommands.close()}
 
                 Stop-Job *
                 Remove-Job *
