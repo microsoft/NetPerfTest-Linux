@@ -239,11 +239,11 @@ Function ProcessCommands{
 
     [PSCredential] $recvIPCreds = New-Object System.Management.Automation.PSCredential($DestIpUserName, $DestIpPassword)
 
-    LogWrite "Processing lagscope commands for Linux" $true
-    ProcessToolCommands -Toolname "lagscope" -RecvComputerName $recvComputerName -RecvComputerCreds $recvIPCreds -SendComputerName $sendComputerName -SendComputerCreds $sendIPCreds -TestUserName $TestUserName -CommandsDir $CommandsDir -Bcleanup $Bcleanup -BZip $ZipResults -TimeoutValueBetweenCommandPairs $TimeoutValueInSeconds -PollTimeInSeconds $PollTimeInSeconds -ListeningPort $ListeningPort -FirewallPortMin $FirewallPortMin -FirewallPortMax $FirewallPortMax -RecvDir $recvDir -SendDir $sendDir
-
     LogWrite "Processing ntttcp commands for Linux" $true
     ProcessToolCommands -Toolname "ntttcp" -RecvComputerName $recvComputerName -RecvComputerCreds $recvIPCreds -SendComputerName $sendComputerName -SendComputerCreds $sendIPCreds -TestUserName $TestUserName -CommandsDir $CommandsDir -Bcleanup $Bcleanup -BZip $ZipResults -TimeoutValueBetweenCommandPairs $TimeoutValueInSeconds -PollTimeInSeconds $PollTimeInSeconds -ListeningPort $ListeningPort -FirewallPortMin $FirewallPortMin -FirewallPortMax $FirewallPortMax -RecvDir $recvDir -SendDir $sendDir
+
+    LogWrite "Processing lagscope commands for Linux" $true
+    ProcessToolCommands -Toolname "lagscope" -RecvComputerName $recvComputerName -RecvComputerCreds $recvIPCreds -SendComputerName $sendComputerName -SendComputerCreds $sendIPCreds -TestUserName $TestUserName -CommandsDir $CommandsDir -Bcleanup $Bcleanup -BZip $ZipResults -TimeoutValueBetweenCommandPairs $TimeoutValueInSeconds -PollTimeInSeconds $PollTimeInSeconds -ListeningPort $ListeningPort -FirewallPortMin $FirewallPortMin -FirewallPortMax $FirewallPortMax -RecvDir $recvDir -SendDir $sendDir
 
     LogWrite "ProcessCommands Done!" $true
     Move-Item -Force -Path $Logfile -Destination "$CommandsDir" -ErrorAction Ignore
@@ -463,18 +463,16 @@ Function ProcessToolCommands{
                     start-sleep -seconds $PollTimeInSeconds
                     if ($Toolname -eq "lagscope") {
                         if ($sendJob.State -eq "Completed") {         
-                            LogWrite "$Toolname exited on both Src machines after $([math]::Round($sw.Elapsed.TotalSeconds,0)) seconds"
+                            LogWrite "$Toolname exited on both Src machines"
                             break
                         }
                     } else {
                         if ($recvJob.State -eq "Completed" -and $sendJob.State -eq "Completed") {         
-                            LogWrite "$Toolname exited on both Src and Dest machines after $([math]::Round($sw.Elapsed.TotalSeconds,0)) seconds"
+                            LogWrite "$Toolname exited on both Src and Dest machines"
                             break
                         }
                     }
                 }
-                $sw.Stop() 
-                Start-Sleep -seconds 30
                 # check if job was completed
                 if ($recvJob.State -ne "Completed") {
                     LogWrite " ++ $Toolname on Receiver did not exit cleanly with state " $recvJob.State
@@ -482,6 +480,7 @@ Function ProcessToolCommands{
                 if ($sendJob.State -ne "Completed") {
                     LogWrite " ++ $Toolname on Sender did not exit cleanly with state " $sendJob.State
                 } 
+                $sw.Stop() 
                 # Since time is up, stop job process so that new commands can be issued
                 Stop-Job $recvJob
                 Stop-Job $sendJob
