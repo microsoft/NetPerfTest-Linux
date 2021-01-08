@@ -473,6 +473,7 @@ Function ProcessToolCommands{
                         }
                     }
                 }
+                Start-Sleep -seconds 30
                 # check if job was completed
                 if ($recvJob.State -ne "Completed") {
                     LogWrite " ++ $Toolname on Receiver did not exit cleanly with state " $recvJob.State
