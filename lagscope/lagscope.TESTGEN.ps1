@@ -89,7 +89,7 @@ function test_lagscope_generate {
     # - Measures over input samples
     banner -Msg "Iteration Tests: [tcp] operations per bounded iterations"
     [int] $tmp  = 50001
-    [int] $iter = 10000 
+    [int] $iter = 20000 
     for ($i=0; $i -lt $g_iters; $i++) {
         [int] $portstart = $tmp + ($i * $g_iters)
 
@@ -97,19 +97,19 @@ function test_lagscope_generate {
         test_recv -Port $portstart -RecvDir $RecvDir
     }
 
-    # Transactions per 10s
-    # - Measures operations per bounded time.
-    banner -Msg "Time Tests: [tcp] operations per bounded time"
-    [int] $tmp = 50001
-    [int] $sec = 10
-    for ($i=0; $i -lt $g_iters; $i++) {
-        [int] $portstart = $tmp + ($i * $g_iters)
+    # # Transactions per 10s
+    # # - Measures operations per bounded time.
+    # banner -Msg "Time Tests: [tcp] operations per bounded time"
+    # [int] $tmp = 50001
+    # [int] $sec = 10
+    # for ($i=0; $i -lt $g_iters; $i++) {
+    #     [int] $portstart = $tmp + ($i * $g_iters)
         
-        # Default
-        test_send -Iter "-t$sec" -Port $portstart -Options "" -OutDir $dir -Fname "tcp.t$sec.iter$i" -SendDir $SendDir
-        test_recv -Port $portstart -RecvDir $RecvDir
+    #     # Default
+    #     test_send -Iter "-t$sec" -Port $portstart -Options "" -OutDir $dir -Fname "tcp.t$sec.iter$i" -SendDir $SendDir
+    #     test_recv -Port $portstart -RecvDir $RecvDir
         
-    }
+    # }
 } # test_lagscope_generate()
 
 #===============================================
