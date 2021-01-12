@@ -463,17 +463,20 @@ Function ProcessToolCommands{
                     start-sleep -seconds $PollTimeInSeconds
                     if ($Toolname -eq "lagscope") {
                         if ($sendJob.State -eq "Completed") {         
-                            LogWrite "$Toolname exited on both Src machines"
+                            LogWrite "$Toolname exited on both Src machines after $([math]::Round($sw.Elapsed.TotalSeconds,0)) seconds"
                             break
                         }
                     } else {
                         if ($recvJob.State -eq "Completed" -and $sendJob.State -eq "Completed") {         
-                            LogWrite "$Toolname exited on both Src and Dest machines"
+                            LogWrite "$Toolname exited on both Src and Dest machines after $([math]::Round($sw.Elapsed.TotalSeconds,0)) seconds"
                             break
                         }
                     }
                 }
-                Start-Sleep -seconds 30
+                # recv file takes longer to generate
+                if ($Toolname -eq "ntttcp") {
+                    Start-Sleep -seconds 15
+                }
                 # check if job was completed
                 if ($recvJob.State -ne "Completed") {
                     LogWrite " ++ $Toolname on Receiver did not exit cleanly with state " $recvJob.State
