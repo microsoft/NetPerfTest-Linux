@@ -475,7 +475,7 @@ Function ProcessToolCommands{
                 }
                 # recv file takes longer to generate
                 if ($Toolname -eq "ntttcp") {
-                    Write-VolumeCache (get-location).Drive.Name
+                    Start-Sleep -seconds 60
                 }
                 # check if job was completed
                 if ($recvJob.State -ne "Completed") {
