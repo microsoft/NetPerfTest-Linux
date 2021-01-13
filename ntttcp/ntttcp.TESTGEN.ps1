@@ -82,7 +82,7 @@ function test_udp {
         [parameter(Mandatory=$true)]  [string] $RecvDir
     )
     
-    [int]    $tmp    = 50100
+    [int]    $tmp    = 50200
     [string] $udpstr = "-u"
     for ($i=0; $i -lt $g_iters; $i++) {
         test_recv -Conn $Conn -Port ($tmp+$i) -Proto $udpstr -OutDir $OutDir -Fname "udp.recv.m$Conn.iter$i" -RecvDir $RecvDir
@@ -100,7 +100,7 @@ function test_tcp {
     )
 
     [string] $tcpstr = ""
-    [int]    $tmp    = 50100
+    [int]    $tmp    = 50200
     for ($i=0; $i -lt $g_iters; $i++) {
         test_recv -Conn $Conn -Port ($tmp+$i) -Proto $tcpstr -OutDir $OutDir -Fname "tcp.recv.m$Conn.iter$i" -RecvDir $RecvDir
         test_send -Conn $Conn -Port ($tmp+$i) -Proto $tcpstr -OutDir $OutDir -Fname "tcp.send.m$Conn.iter$i" -SendDir $SendDir
