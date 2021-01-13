@@ -43,7 +43,7 @@ function test_recv {
     )
 
     [string] $out = (Join-Path -Path $RecvDir -ChildPath "$Fname")
-    [string] $cmd = "./ntttcp -r -e -m  `"$Conn,*,$g_DestIp`" $proto -V -b 65536 -W $g_ptime -C $g_ptime -p $Port -t $g_runtime -N -x $out.xml > $out.txt"
+    [string] $cmd = "./ntttcp -r -e -m  `"$Conn,*,$g_DestIp`" $proto -V -b 60000 -W $g_ptime -C $g_ptime -p $Port -t $g_runtime -N -x $out.xml > $out.txt"
     [string] $cmdOut = (Join-Path -Path $OutDir -ChildPath "$Fname")
     Write-Output $cmd | Out-File -Encoding ascii -Append "$cmdOut.txt"
     Write-Output $cmd | Out-File -Encoding ascii -Append $g_log
@@ -65,7 +65,7 @@ function test_send {
     )
 
     [string] $out = (Join-Path -Path $SendDir -ChildPath "$Fname")
-    [string] $cmd = "./ntttcp -s -m `"$Conn,*,$g_DestIp`" $proto -V -b 65536 -W $g_ptime -C $g_ptime -p $Port -t $g_runtime -N -x $out.xml > $out.txt"
+    [string] $cmd = "./ntttcp -s -m `"$Conn,*,$g_DestIp`" $proto -V -b 60000 -W $g_ptime -C $g_ptime -p $Port -t $g_runtime -N -x $out.xml > $out.txt"
     [string] $cmdOut = (Join-Path -Path $OutDir -ChildPath "$Fname")
     Write-Output $cmd | Out-File -Encoding ascii -Append "$cmdOut.txt"
     Write-Output $cmd | Out-File -Encoding ascii -Append $g_log
