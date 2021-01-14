@@ -88,8 +88,8 @@ function env_destroy {
     )
 
     If (Test-Path $OutDir) {
-        # Careful - Deletes $OurDir and all its contents
-        Remove-Item $OutDir -Recurse -Force # Careful - Deletes $OurDir and all its contents
+        # Careful - Deletes $OutDir and all its contents
+        Remove-Item $OutDir -Recurse -Force # Careful - Deletes $OutDir and all its contents
     }
 } # env_destroy()
 
