@@ -473,10 +473,10 @@ Function ProcessToolCommands{
                         }
                     }
                 }
-                # # recv file takes longer to generate
-                # if ($Toolname -eq "ntttcp") {
-                #     Start-Sleep -seconds 30
-                # }
+                # recv file takes longer to generate
+                if ($Toolname -eq "ntttcp") {
+                    Start-Sleep -seconds 900
+                }
                 # check if job was completed
                 if ($recvJob.State -ne "Completed") {
                     LogWrite " ++ $Toolname on Receiver did not exit cleanly with state " $recvJob.State
