@@ -43,7 +43,7 @@ function test_recv {
     )
 
     [string] $out = (Join-Path -Path $RecvDir -ChildPath "$Fname")
-    [string] $cmd = "./ntttcp -r -e `"$g_DestIp`" $proto -V -b 65536 -W $g_ptime -C $g_ptime -p 7100 -P 1 -t $g_runtime -N -x $out.xml > $out.txt"
+    [string] $cmd = "./ntttcp -r -e -m  `"$Conn,*,$g_DestIp`" $proto -V -b 60000 -W $g_ptime -C $g_ptime -p $Port -t $g_runtime -N -x $out.xml > $out.txt"
     [string] $cmdOut = (Join-Path -Path $OutDir -ChildPath "$Fname")
     Write-Output $cmd | Out-File -Encoding ascii -Append "$cmdOut.txt"
     Write-Output $cmd | Out-File -Encoding ascii -Append $g_log
@@ -65,7 +65,7 @@ function test_send {
     )
 
     [string] $out = (Join-Path -Path $SendDir -ChildPath "$Fname")
-    [string] $cmd = "./ntttcp -s `"$g_DestIp`" $proto -V -b 65536 -W $g_ptime -C $g_ptime -p 7100 -P 1 -t $g_runtime -N -x $out.xml > $out.txt"
+    [string] $cmd = "./ntttcp -s -m `"$Conn,*,$g_DestIp`" $proto -V -b 60000 -W $g_ptime -C $g_ptime -p $Port -t $g_runtime -N -x $out.xml > $out.txt"
     [string] $cmdOut = (Join-Path -Path $OutDir -ChildPath "$Fname")
     Write-Output $cmd | Out-File -Encoding ascii -Append "$cmdOut.txt"
     Write-Output $cmd | Out-File -Encoding ascii -Append $g_log
@@ -130,8 +130,8 @@ function test_ntttcp {
 
     #Load the variables needed to generate the commands
     # execution time in seconds
-    [int] $g_runtime = 60
-    [int] $g_ptime   = 5
+    [int] $g_runtime = 90
+    [int] $g_ptime   = 2
 
     # execution time ($g_runtime) in seconds, wu, cd times ($g_ptime) will come from the Config ps1 file, if specified and take precedence over defaults 
     if ($ConfigFile -ne $null) {
@@ -147,7 +147,7 @@ function test_ntttcp {
 
     # NTTTCP ^2 connection scaling to MAX supported.
     [int]   $ConnMax  = 512 # NTTTCP maximum connections is 999.
-    [int[]] $ConnList = @(1)
+    [int[]] $ConnList = @(64)
     if ($g_detail) {
         $ConnList = @(1, 2, 4, 8, 16, 32, 64, 128, 256, $ConnMax)
     }
