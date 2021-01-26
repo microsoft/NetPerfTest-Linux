@@ -10,7 +10,8 @@ Param(
     [parameter(Mandatory=$true)]  [string] $SrcIp,
     [parameter(Mandatory=$true)]  [String] $OutDir = "",
     [parameter(Mandatory=$true)]  [string] $DestUserName,
-    [parameter(Mandatory=$true)]  [string] $SrcUserName
+    [parameter(Mandatory=$true)]  [string] $SrcUserName,
+    [parameter(Mandatory=$true)]  [string] $TestUserName
 
 )
 $scriptName = $MyInvocation.MyCommand.Name 
@@ -55,6 +56,17 @@ function env_normalize {
     return (Join-Path $baseDir $workDirName).TrimEnd("\")
 } # env_normalize()
 
+function remote_env_normalize {
+    [CmdletBinding()]
+    Param(
+        [parameter(Mandatory=$true)] [String] $OutDir
+    )
+    $computername = hostname
+    $workDirName = "msdbg.$computername.perftest"
+
+    return (Join-Path $OutDir $workDirName).TrimEnd("\")
+} # remote_env_normalize()
+
 function env_create {
     [CmdletBinding()]
     Param(
@@ -76,10 +88,11 @@ function env_destroy {
     )
 
     If (Test-Path $OutDir) {
-        # Careful - Deletes $OurDir and all its contents
-        Remove-Item $OutDir -Recurse -Force # Careful - Deletes $OurDir and all its contents
+        # Careful - Deletes $OutDir and all its contents
+        Remove-Item $OutDir -Recurse -Force # Careful - Deletes $OutDir and all its contents
     }
 } # env_destroy()
+
 
 #===============================================
 # External Functions - Main Program
@@ -94,7 +107,8 @@ function test_main {
         [parameter(Mandatory=$true)]  [string] $SrcIp,
         [parameter(Mandatory=$true)]  [String] $OutDir = "",
         [parameter(Mandatory=$true)]  [string] $DestUserName,
-        [parameter(Mandatory=$true)]  [string] $SrcUserName
+        [parameter(Mandatory=$true)]  [string] $SrcUserName,
+        [parameter(Mandatory=$true)]  [string] $TestUserName
     )
     Clear-Host
     input_display
@@ -112,9 +126,9 @@ function test_main {
     [string] $g_DestIp    = $DestIp
     [string] $g_SrcIp     = $SrcIp
 
-    $DestDir = "/home/$DestUserName/$OutDir"
-    $SrcDir = "/home/$SrcUserName/$OutDir"
-    $OutDir = "$HOME/$OutDir"
+    $DestDir = remote_env_normalize "/home/$DestUserName/$OutDir"
+    $SrcDir = remote_env_normalize "/home/$SrcUserName/$OutDir"
+    $OutDir = "/home/$TestUserName/$OutDir"
 
     $workDir = env_normalize -OutDir $OutDir
     Write-Host $workDir
@@ -124,7 +138,7 @@ function test_main {
 
 
     # lagscope does not have detail 
-    ./lagscope/lagscope.TESTGEN.ps1   -DestIp $g_DestIp -SrcIp $g_SrcIp -OutDir $workDir -Iterations $g_iters
-    ./ntttcp/ntttcp.TESTGEN.ps1 -DestIp $g_DestIp -SrcIp $g_SrcIp -OutDir $workDir -Detail:$g_detail -Iterations $g_iters -Config $g_config
+    ./lagscope/lagscope.TESTGEN.ps1   -DestIp $g_DestIp -SrcIp $g_SrcIp -OutDir $workDir -Iterations $g_iters -DestDir $DestDir -SrcDir $SrcDir
+    ./ntttcp/ntttcp.TESTGEN.ps1 -DestIp $g_DestIp -SrcIp $g_SrcIp -OutDir $workDir -Detail:$g_detail -Iterations $g_iters -Config $g_config -DestDir $DestDir -SrcDir $SrcDir
 
     } test_main @PSBoundParameters # Entry Point

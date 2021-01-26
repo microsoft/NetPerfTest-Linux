@@ -7,7 +7,9 @@ Param(
     [parameter(Mandatory=$false)] [ValidateSet('Sampling','Testing')] [string] $Config = "Sampling",
     [parameter(Mandatory=$true)]  [string] $DestIp,
     [parameter(Mandatory=$true)]  [string] $SrcIp,
-    [parameter(Mandatory=$true)]  [ValidateScript({Test-Path $_ -PathType Container})] [String] $OutDir = "" 
+    [parameter(Mandatory=$true)]  [ValidateScript({Test-Path $_ -PathType Container})] [String] $OutDir = "",
+    [parameter(Mandatory=$true)]  [string] $DestDir,
+    [parameter(Mandatory=$true)]  [string] $SrcDir
 )
 $scriptName = $MyInvocation.MyCommand.Name 
 
@@ -41,7 +43,7 @@ function test_recv {
     )
 
     [string] $out = (Join-Path -Path $RecvDir -ChildPath "$Fname")
-    [string] $cmd = "./ntttcp -r -m `"$Conn,*,$g_DestIp`" $proto -V -W $g_ptime -C $g_ptime -p $Port -t $g_runtime -N -x $out.xml"
+    [string] $cmd = "./ntttcp -r -e -m  `"$Conn,*,$g_DestIp`" $proto -V -b 60000 -W $g_ptime -C $g_ptime -p $Port -t $g_runtime -N -x $out.xml > $out.txt"
     [string] $cmdOut = (Join-Path -Path $OutDir -ChildPath "$Fname")
     Write-Output $cmd | Out-File -Encoding ascii -Append "$cmdOut.txt"
     Write-Output $cmd | Out-File -Encoding ascii -Append $g_log
@@ -63,7 +65,7 @@ function test_send {
     )
 
     [string] $out = (Join-Path -Path $SendDir -ChildPath "$Fname")
-    [string] $cmd = "./ntttcp -s -m `"$Conn,*,$g_DestIp`" $proto -V -W $g_ptime -C $g_ptime -p $Port -t $g_runtime -N -x $out.xml > $out.txt"
+    [string] $cmd = "./ntttcp -s -m `"$Conn,*,$g_DestIp`" $proto -V -b 60000 -W $g_ptime -C $g_ptime -p $Port -t $g_runtime -N -x $out.xml > $out.txt"
     [string] $cmdOut = (Join-Path -Path $OutDir -ChildPath "$Fname")
     Write-Output $cmd | Out-File -Encoding ascii -Append "$cmdOut.txt"
     Write-Output $cmd | Out-File -Encoding ascii -Append $g_log
@@ -80,7 +82,7 @@ function test_udp {
         [parameter(Mandatory=$true)]  [string] $RecvDir
     )
     
-    [int]    $tmp    = 50001
+    [int]    $tmp    = 50100
     [string] $udpstr = "-u"
     for ($i=0; $i -lt $g_iters; $i++) {
         test_recv -Conn $Conn -Port ($tmp+$i) -Proto $udpstr -OutDir $OutDir -Fname "udp.recv.m$Conn.iter$i" -RecvDir $RecvDir
@@ -98,7 +100,7 @@ function test_tcp {
     )
 
     [string] $tcpstr = ""
-    [int]    $tmp    = 50001
+    [int]    $tmp    = 50100
     for ($i=0; $i -lt $g_iters; $i++) {
         test_recv -Conn $Conn -Port ($tmp+$i) -Proto $tcpstr -OutDir $OutDir -Fname "tcp.recv.m$Conn.iter$i" -RecvDir $RecvDir
         test_send -Conn $Conn -Port ($tmp+$i) -Proto $tcpstr -OutDir $OutDir -Fname "tcp.send.m$Conn.iter$i" -SendDir $SendDir
@@ -128,7 +130,7 @@ function test_ntttcp {
 
     #Load the variables needed to generate the commands
     # execution time in seconds
-    [int] $g_runtime = 10
+    [int] $g_runtime = 90
     [int] $g_ptime   = 2
 
     # execution time ($g_runtime) in seconds, wu, cd times ($g_ptime) will come from the Config ps1 file, if specified and take precedence over defaults 
@@ -145,7 +147,7 @@ function test_ntttcp {
 
     # NTTTCP ^2 connection scaling to MAX supported.
     [int]   $ConnMax  = 512 # NTTTCP maximum connections is 999.
-    [int[]] $ConnList = @(1, 64)
+    [int[]] $ConnList = @(64)
     if ($g_detail) {
         $ConnList = @(1, 2, 4, 8, 16, 32, 64, 128, 256, $ConnMax)
     }
