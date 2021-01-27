@@ -82,7 +82,7 @@ function test_udp {
         [parameter(Mandatory=$true)]  [string] $RecvDir
     )
     
-    [int]    $tmp    = 50100
+    [int]    $tmp    = 50002
     [string] $udpstr = "-u"
     for ($i=0; $i -lt $g_iters; $i++) {
         test_recv -Conn $Conn -Port ($tmp+$i) -Proto $udpstr -OutDir $OutDir -Fname "udp.recv.m$Conn.iter$i" -RecvDir $RecvDir
@@ -100,7 +100,7 @@ function test_tcp {
     )
 
     [string] $tcpstr = ""
-    [int]    $tmp    = 50100
+    [int]    $tmp    = 50002
     for ($i=0; $i -lt $g_iters; $i++) {
         test_recv -Conn $Conn -Port ($tmp+$i) -Proto $tcpstr -OutDir $OutDir -Fname "tcp.recv.m$Conn.iter$i" -RecvDir $RecvDir
         test_send -Conn $Conn -Port ($tmp+$i) -Proto $tcpstr -OutDir $OutDir -Fname "tcp.send.m$Conn.iter$i" -SendDir $SendDir
@@ -130,7 +130,7 @@ function test_ntttcp {
 
     #Load the variables needed to generate the commands
     # execution time in seconds
-    [int] $g_runtime = 90
+    [int] $g_runtime = 60
     [int] $g_ptime   = 2
 
     # execution time ($g_runtime) in seconds, wu, cd times ($g_ptime) will come from the Config ps1 file, if specified and take precedence over defaults 
@@ -147,7 +147,7 @@ function test_ntttcp {
 
     # NTTTCP ^2 connection scaling to MAX supported.
     [int]   $ConnMax  = 512 # NTTTCP maximum connections is 999.
-    [int[]] $ConnList = @(64)
+    [int[]] $ConnList = @(128)
     if ($g_detail) {
         $ConnList = @(1, 2, 4, 8, 16, 32, 64, 128, 256, $ConnMax)
     }
