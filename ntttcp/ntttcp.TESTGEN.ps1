@@ -130,7 +130,7 @@ function test_ntttcp {
 
     #Load the variables needed to generate the commands
     # execution time in seconds
-    [int] $g_runtime = 60
+    [int] $g_runtime = 90
     [int] $g_ptime   = 2
 
     # execution time ($g_runtime) in seconds, wu, cd times ($g_ptime) will come from the Config ps1 file, if specified and take precedence over defaults 
@@ -163,6 +163,13 @@ function test_ntttcp {
         test_tcp -Conn $Conn -OutDir $dir -SendDir $dirSend -RecvDir $dirRecv
         Write-Host " "
     }
+
+    [int]   $ConnMax  = 512 # NTTTCP maximum connections is 999.
+    [int[]] $ConnList = @(64)
+    if ($g_detail) {
+        $ConnList = @(1, 2, 4, 8, 16, 32, 64, 128, 256, $ConnMax)
+    }
+
 
     banner -Msg "UDP Tests"
     $dir = (Join-Path -Path $OutDir -ChildPath "udp") 
