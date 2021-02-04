@@ -130,7 +130,7 @@ function test_ntttcp {
 
     #Load the variables needed to generate the commands
     # execution time in seconds
-    [int] $g_runtime = 90
+    [int] $g_runtime = 60
     [int] $g_ptime   = 2
 
     # execution time ($g_runtime) in seconds, wu, cd times ($g_ptime) will come from the Config ps1 file, if specified and take precedence over defaults 
@@ -206,7 +206,7 @@ function test_main {
     [string] $g_log        = "$dir/NTTTCP.Commands.txt"
     [string] $g_logSend    = "$dir/NTTTCP.Commands.Send.txt"
     [string] $g_logRecv    = "$dir/NTTTCP.Commands.Recv.txt"
-    [string] $g_ConfigFile = "./ntttcp/NTTTCP.$Config.Config.ps1"
+    [string] $g_ConfigFile = "./ntttcp/ntttcp.$Config.Config.ps1"
     [string] $sendDir   = (Join-Path -Path $SrcDir -ChildPath "ntttcp")
     [string] $recvDir   = (Join-Path -Path $DestDir -ChildPath "ntttcp")
 
