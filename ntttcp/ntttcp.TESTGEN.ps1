@@ -130,7 +130,7 @@ function test_ntttcp {
 
     #Load the variables needed to generate the commands
     # execution time in seconds
-    [int] $g_runtime = 60
+    [int] $g_runtime = 90
     [int] $g_ptime   = 2
 
     # execution time ($g_runtime) in seconds, wu, cd times ($g_ptime) will come from the Config ps1 file, if specified and take precedence over defaults 
