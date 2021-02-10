@@ -43,7 +43,7 @@ function test_recv {
     )
 
     [string] $out = (Join-Path -Path $RecvDir -ChildPath "$Fname")
-    [string] $cmd = "./ntttcp -r -e -m  `"$Conn,*,$g_DestIp`" $proto -V -b 60000 -W $g_ptime -C $g_ptime -p $Port -t $g_runtime -N -x $out.xml > $out.txt"
+    [string] $cmd = "./ntttcp -r -m  `"$Conn,*,$g_DestIp`" $proto -V -b 60000 -W $g_ptime -C $g_ptime -p $Port -t $g_runtime -N -x $out.xml > $out.txt"
     [string] $cmdOut = (Join-Path -Path $OutDir -ChildPath "$Fname")
     Write-Output $cmd | Out-File -Encoding ascii -Append "$cmdOut.txt"
     Write-Output $cmd | Out-File -Encoding ascii -Append $g_log
@@ -147,7 +147,7 @@ function test_ntttcp {
 
     # NTTTCP ^2 connection scaling to MAX supported.
     [int]   $ConnMax  = 512 # NTTTCP maximum connections is 999.
-    [int[]] $ConnList = @(128)
+    [int[]] $ConnList = @(256)
     if ($g_detail) {
         $ConnList = @(1, 2, 4, 8, 16, 32, 64, 128, 256, $ConnMax)
     }
