@@ -77,11 +77,22 @@ function test_lagscope_generate {
     [CmdletBinding()]
     Param(
         [parameter(Mandatory=$true)] [String] $OutDir,
+        [parameter(Mandatory=$false)] [ValidateScript({Test-Path $_})] [String] $ConfigFile,
         [parameter(Mandatory=$true)]  [string] $SendDir,
         [parameter(Mandatory=$true)]  [string] $RecvDir
 
     )
-
+    if ($ConfigFile -ne $null) {
+        Try
+        {
+            . .\$ConfigFile
+        }
+        Catch
+        {
+            Write-Host "$ConfigFile will not be used. Exception $($_.Exception.Message) in $($MyInvocation.MyCommand.Name)"
+        }
+    }
+    
     # Normalize output directory
     $dir = $OutDir
 
@@ -121,6 +132,7 @@ function test_main {
         [parameter(Mandatory=$true)]  [string] $DestIp,
         [parameter(Mandatory=$true)]  [string] $SrcIp,
         [parameter(Mandatory=$true)]  [ValidateScript({Test-Path $_ -PathType Container})] [String] $OutDir = "",
+        [parameter(Mandatory=$false)] [ValidateSet('Sampling','Testing')] [string] $Config = "Sampling",
         [parameter(Mandatory=$true)]  [string] $DestDir,
         [parameter(Mandatory=$true)]  [string] $SrcDir
 
@@ -134,6 +146,7 @@ function test_main {
     [string] $g_log     = "$dir/LAGSCOPE.Commands.txt"
     [string] $g_logSend = "$dir/LAGSCOPE.Commands.Send.txt"
     [string] $g_logRecv = "$dir/LAGSCOPE.Commands.Recv.txt" 
+    [string] $g_ConfigFile = "./lagscope/lagscope.$Config.Config.ps1"
     [string] $sendDir   = (Join-Path -Path $SrcDir -ChildPath "lagscope")
     [string] $recvDir   = (Join-Path -Path $DestDir -ChildPath "lagscope")
 
@@ -142,5 +155,9 @@ function test_main {
     # Optional - Edit spaces in output path for Invoke-Expression compatibility
     # $dir  = $dir  -replace ' ','` '
 
-    test_lagscope_generate -OutDir $dir -SendDir $sendDir -RecvDir $recvDir
+    if (Test-Path $g_ConfigFile) {
+        test_lagscope_generate -OutDir $dir -SendDir $sendDir -RecvDir $recvDir -ConfigFile $g_ConfigFile
+    } else {
+        test_lagscope_generate -OutDir $dir -SendDir $sendDir -RecvDir $recvDir
+    }
 } test_main @PSBoundParameters # Entry Point
