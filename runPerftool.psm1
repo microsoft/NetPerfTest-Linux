@@ -63,26 +63,10 @@ $ScriptBlockTaskKill = {
 
 # Set up a directory on the remote machines for results gathering.
 $ScriptBlockCreateDirForResults = {
-    param ($Cmddir, $creds)
-    $folders = $Cmddir.Split('/')
-
-    $folderToCreate = ""
-    $Exists = Test-Path -Path $Cmddir
-
-    for ($i=1; $i -le $folders.count; $i++) {
-
-        $currFolder = $folders[$i]
-        $folderToCreate = "$folderToCreate/$currFolder"
-
-        if (!(Test-Path $folderToCreate)) {
-            New-Item -Force -ItemType Directory -Path $folderToCreate
-            Write-Output $creds.GetNetworkCredential().Password | sudo -S chmod -R 777 $folderToCreate
-        }   
-
+    param ($Cmddir)
+    if (!(Test-Path $Cmddir)) {
+        New-Item -ItemType Directory -Force -Path "$Cmddir" | Out-Null
     }
-    # if (!(Test-Path $Cmddir)) {
-    #     mkdir -p -m 777 "$Cmddir" 
-    # }
     return $Exists
 } # $ScriptBlockCreateDirForResults()
 
@@ -255,11 +239,11 @@ Function ProcessCommands{
 
     [PSCredential] $recvIPCreds = New-Object System.Management.Automation.PSCredential($DestIpUserName, $DestIpPassword)
 
+    # LogWrite "Processing lagscope commands for Linux" $true
+    # ProcessToolCommands -Toolname "lagscope" -RecvComputerName $recvComputerName -RecvComputerCreds $recvIPCreds -SendComputerName $sendComputerName -SendComputerCreds $sendIPCreds -TestUserName $TestUserName -CommandsDir $CommandsDir -Bcleanup $Bcleanup -BZip $ZipResults -TimeoutValueBetweenCommandPairs $TimeoutValueInSeconds -PollTimeInSeconds $PollTimeInSeconds -ListeningPort $ListeningPort -FirewallPortMin $FirewallPortMin -FirewallPortMax $FirewallPortMax -RecvDir $recvDir -SendDir $sendDir
+
     LogWrite "Processing ntttcp commands for Linux" $true
     ProcessToolCommands -Toolname "ntttcp" -RecvComputerName $recvComputerName -RecvComputerCreds $recvIPCreds -SendComputerName $sendComputerName -SendComputerCreds $sendIPCreds -TestUserName $TestUserName -CommandsDir $CommandsDir -Bcleanup $Bcleanup -BZip $ZipResults -TimeoutValueBetweenCommandPairs $TimeoutValueInSeconds -PollTimeInSeconds $PollTimeInSeconds -ListeningPort $ListeningPort -FirewallPortMin $FirewallPortMin -FirewallPortMax $FirewallPortMax -RecvDir $recvDir -SendDir $sendDir
-
-    LogWrite "Processing lagscope commands for Linux" $true
-    ProcessToolCommands -Toolname "lagscope" -RecvComputerName $recvComputerName -RecvComputerCreds $recvIPCreds -SendComputerName $sendComputerName -SendComputerCreds $sendIPCreds -TestUserName $TestUserName -CommandsDir $CommandsDir -Bcleanup $Bcleanup -BZip $ZipResults -TimeoutValueBetweenCommandPairs $TimeoutValueInSeconds -PollTimeInSeconds $PollTimeInSeconds -ListeningPort $ListeningPort -FirewallPortMin $FirewallPortMin -FirewallPortMax $FirewallPortMax -RecvDir $recvDir -SendDir $sendDir
 
     LogWrite "ProcessCommands Done!" $true
     Move-Item -Force -Path $Logfile -Destination "$CommandsDir" -ErrorAction Ignore
@@ -387,7 +371,7 @@ Function ProcessToolCommands{
             start-sleep -seconds $credPropagationTimeInSecond
             $recvPSSession = New-PSSession -Port $ListeningPort -HostName $RecvComputerName -UserName ($RecvComputerCreds.GetNetworkCredential().UserName) -KeyFilePath $keyFilePath
     
-            if($recvPSsession -eq $null) {
+            if($null -eq $recvPSsession) {
                 LogWrite "Error connecting to Host: $($RecvComputerName)"
                 return 
             }
@@ -398,7 +382,7 @@ Function ProcessToolCommands{
             start-sleep -seconds $credPropagationTimeInSecond
             $sendPSSession = New-PSSession -Port $ListeningPort -HostName $SendComputerName -UserName $SendComputerCreds.GetNetworkCredential().UserName -KeyFilePath $keyFilePath
         
-            if($sendPSsession -eq $null) {
+            if($null -eq $sendPSsession) {
                 LogWrite "Error connecting to Host: $($SendComputerName)"
                 return
             }
@@ -409,18 +393,18 @@ Function ProcessToolCommands{
             $recvCmdFile = Join-Path -Path $CommandsDir -ChildPath "/$Toolname/$ToolnameUpper.Commands.Recv.txt"
     
             # Ensure that remote machines have the directory created for results gathering. 
-            # $recvFolderExists = Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockCreateDirForResults -ArgumentList ($RecvDir, $RecvComputerCreds)
-            # $sendFolderExists = Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockCreateDirForResults -ArgumentList ($SendDir, $SendComputerCreds)
+            $recvFolderExists = Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockCreateDirForResults -ArgumentList ($RecvDir)
+            $sendFolderExists = Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockCreateDirForResults -ArgumentList ($SendDir)
     
             # Clean up the Receiver/Sender folders on remote machines, if they exist so that we dont capture any stale logs
             Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockRemoveFileFolder -ArgumentList "$RecvDir/Receiver"
             Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockRemoveFileFolder -ArgumentList "$SendDir/Sender"
     
             #Create dirs and subdirs for each of the supported tools
-            # Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockCreateDirForResults -ArgumentList ($RecvDir+"/Receiver/$Toolname/tcp", $RecvComputerCreds)
-            # Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockCreateDirForResults -ArgumentList ($SendDir+"/Sender/$Toolname/tcp", $SendComputerCreds)
-            # Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockCreateDirForResults -ArgumentList ($RecvDir+"/Receiver/$Toolname/udp", $RecvComputerCreds)
-            # Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockCreateDirForResults -ArgumentList ($SendDir+"/Sender/$Toolname/udp", $SendComputerCreds)
+            Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockCreateDirForResults -ArgumentList ($RecvDir+"/Receiver/$Toolname/tcp")
+            Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockCreateDirForResults -ArgumentList ($SendDir+"/Sender/$Toolname/tcp")
+            Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockCreateDirForResults -ArgumentList ($RecvDir+"/Receiver/$Toolname/udp")
+            Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockCreateDirForResults -ArgumentList ($SendDir+"/Sender/$Toolname/udp")
     
             # Copy the tool binaries to the remote machines
             Copy-Item -Path "$toolpath/$Toolname" -Destination "$RecvDir/Receiver/$Toolname" -ToSession $recvPSSession
@@ -458,7 +442,10 @@ Function ProcessToolCommands{
                 $recvCmd =  $recvCmd -ireplace [regex]::Escape($CommandsDir), "$RecvDir/Receiver"
                 LogWrite "Invoking Cmd - Machine: $recvComputerName Command: $recvCmd" 
                 $recvJob = Invoke-Command -Session $recvPSSession -ScriptBlock ([Scriptblock]::Create($recvCmd)) -AsJob 
-    
+                
+                if ($Toolname -eq "ntttcp") {
+                    Start-Sleep -Seconds 5
+                }
                 # Work here to invoke send commands
                 # Since we want the files to get generated under a subfolder, we replace the path to include the subfolder
                 $sendCmd =  $sendCmd -ireplace [regex]::Escape($CommandsDir), "$SendDir/Sender"
@@ -477,11 +464,22 @@ Function ProcessToolCommands{
                 # check job status until job is done running
                 while (([math]::Round($sw.Elapsed.TotalSeconds,0)) -lt $timeout) {
                     start-sleep -seconds $PollTimeInSeconds
-                    if ($recvJob.State -eq "Completed" -and $sendJob.State -eq "Completed") {         
-                        LogWrite "$Toolname exited on both Src and Dest machines"
-                        break
+                    if ($Toolname -eq "lagscope") {
+                        if ($sendJob.State -eq "Completed") {         
+                            LogWrite "$Toolname exited on both Src machines after $([math]::Round($sw.Elapsed.TotalSeconds,0)) seconds"
+                            break
+                        }
+                    } else {
+                        if ($recvJob.State -eq "Completed" -and $sendJob.State -eq "Completed") {         
+                            LogWrite "$Toolname exited on both Src and Dest machines after $([math]::Round($sw.Elapsed.TotalSeconds,0)) seconds"
+                            break
+                        }
                     }
                 }
+                # recv file takes longer to generate
+                # if ($Toolname -eq "ntttcp") {
+                #     Start-Sleep -seconds 900
+                # }
                 # check if job was completed
                 if ($recvJob.State -ne "Completed") {
                     LogWrite " ++ $Toolname on Receiver did not exit cleanly with state " $recvJob.State
@@ -495,7 +493,8 @@ Function ProcessToolCommands{
                 Stop-Job $sendJob
     
                 # Clean up completed or failed job list
-                Remove-Job *
+                Remove-Job $recvJob 
+                Remove-Job $sendJob
     
                 # Add sleep between before running the next command pair
                 start-sleep -seconds $PollTimeInSeconds
@@ -567,8 +566,8 @@ Function ProcessToolCommands{
         finally {
             if($gracefulCleanup -eq $False)
             {
-                if ($recvCommands -ne $null) {$recvCommands.close()}
-                if ($sendCommands -ne $null) {$sendCommands.close()}
+                if ($null -ne $recvCommands ) {$recvCommands.close()}
+                if ($null -ne $sendCommands) {$sendCommands.close()}
 
                 Stop-Job *
                 Remove-Job *
@@ -580,10 +579,10 @@ Function ProcessToolCommands{
     
             LogWrite "Cleaning up the firewall rules that were created as part of script run..."
             # Clean up the firewall rules that this script created
-            Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockCleanupFirewallRules -ArgumentList ("$FirewallPortMin`:$FirewallPortMax/tcp", $RecvComputerCreds)
-            Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockCleanupFirewallRules -ArgumentList ("$FirewallPortMin`:$FirewallPortMax/tcp", $SendComputerCreds)
-            Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockCleanupFirewallRules -ArgumentList ("$FirewallPortMin`:$FirewallPortMax/udp", $RecvComputerCreds)
-            Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockCleanupFirewallRules -ArgumentList ("$FirewallPortMin`:$FirewallPortMax/udp", $SendComputerCreds)
+            Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockCleanupFirewallRules -ArgumentList ("50000:50512/tcp", $RecvComputerCreds)
+            Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockCleanupFirewallRules -ArgumentList ("50000:50512/tcp", $SendComputerCreds)
+            Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockCleanupFirewallRules -ArgumentList ("50000:50512/udp", $RecvComputerCreds)
+            Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockCleanupFirewallRules -ArgumentList ("50000:50512/udp", $SendComputerCreds)
             
             LogWrite "Cleaning up public private key and known hosts that were created as part of script run"
             # Delete authorized host from receiver and sender computer

@@ -88,8 +88,8 @@ function env_destroy {
     )
 
     If (Test-Path $OutDir) {
-        # Careful - Deletes $OurDir and all its contents
-        Remove-Item $OutDir -Recurse -Force # Careful - Deletes $OurDir and all its contents
+        # Careful - Deletes $OutDir and all its contents
+        Remove-Item $OutDir -Recurse -Force # Careful - Deletes $OutDir and all its contents
     }
 } # env_destroy()
 
@@ -138,7 +138,7 @@ function test_main {
 
 
     # lagscope does not have detail 
-    ./lagscope/lagscope.TESTGEN.ps1   -DestIp $g_DestIp -SrcIp $g_SrcIp -OutDir $workDir -Iterations $g_iters -DestDir $DestDir -SrcDir $SrcDir
+    ./lagscope/lagscope.TESTGEN.ps1   -DestIp $g_DestIp -SrcIp $g_SrcIp -OutDir $workDir -Iterations $g_iters -DestDir $DestDir -SrcDir $SrcDir -Config $g_config
     ./ntttcp/ntttcp.TESTGEN.ps1 -DestIp $g_DestIp -SrcIp $g_SrcIp -OutDir $workDir -Detail:$g_detail -Iterations $g_iters -Config $g_config -DestDir $DestDir -SrcDir $SrcDir
 
     } test_main @PSBoundParameters # Entry Point
