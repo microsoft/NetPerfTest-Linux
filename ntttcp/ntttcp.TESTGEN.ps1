@@ -39,11 +39,12 @@ function test_recv {
         [parameter(Mandatory=$false)]  [string] $Proto,
         [parameter(Mandatory=$true)]   [String] $OutDir,
         [parameter(Mandatory=$true)]   [String] $Fname,
-        [parameter(Mandatory=$true)]  [string] $RecvDir
+        [parameter(Mandatory=$true)]  [string] $RecvDir, 
+        [parameter(Mandatory=$true)]   [Int]    $BufferLen
     )
 
     [string] $out = (Join-Path -Path $RecvDir -ChildPath "$Fname")
-    [string] $cmd = "./ntttcp -r -m  `"$Conn,*,$g_DestIp`" $proto -V -b $g_bufferlen -W $g_ptime -C $g_ptime -p $Port -t $g_runtime -x $out.xml > $out.txt"
+    [string] $cmd = "./ntttcp -r -m  `"$Conn,*,$g_DestIp`" $proto -V -b $BufferLen -W $g_ptime -C $g_ptime -p $Port -t $g_runtime -x $out.xml > $out.txt"
     [string] $cmdOut = (Join-Path -Path $OutDir -ChildPath "$Fname")
     Write-Output $cmd | Out-File -Encoding ascii -Append "$cmdOut.txt"
     Write-Output $cmd | Out-File -Encoding ascii -Append $g_log
@@ -60,12 +61,13 @@ function test_send {
         [parameter(Mandatory=$false)]  [string] $Proto,
         [parameter(Mandatory=$true)]   [String] $OutDir,
         [parameter(Mandatory=$true)]   [String] $Fname,
-        [parameter(Mandatory=$true)]  [string] $SendDir
+        [parameter(Mandatory=$true)]  [string] $SendDir, 
+        [parameter(Mandatory=$true)]   [Int]    $BufferLen
 
     )
 
     [string] $out = (Join-Path -Path $SendDir -ChildPath "$Fname")
-    [string] $cmd = "./ntttcp -s -m `"$Conn,*,$g_DestIp`" $proto -V -b $g_bufferlen -W $g_ptime -C $g_ptime -p $Port -t $g_runtime -x $out.xml > $out.txt"
+    [string] $cmd = "./ntttcp -s -m `"$Conn,*,$g_DestIp`" $proto -V -b $BufferLen -W $g_ptime -C $g_ptime -p $Port -t $g_runtime -x $out.xml > $out.txt"
     [string] $cmdOut = (Join-Path -Path $OutDir -ChildPath "$Fname")
     Write-Output $cmd | Out-File -Encoding ascii -Append "$cmdOut.txt"
     Write-Output $cmd | Out-File -Encoding ascii -Append $g_log
@@ -79,14 +81,15 @@ function test_udp {
         [parameter(Mandatory=$true)] [String] $OutDir,
         [parameter(Mandatory=$true)] [Int]    $Conn,
         [parameter(Mandatory=$true)]  [string] $SendDir,
-        [parameter(Mandatory=$true)]  [string] $RecvDir
+        [parameter(Mandatory=$true)]  [string] $RecvDir, 
+        [parameter(Mandatory=$true)]  [Int] $BufferLen
     )
     
     [int]    $tmp    = 50002
     [string] $udpstr = "-u"
     for ($i=0; $i -lt $g_iters; $i++) {
-        test_recv -Conn $Conn -Port ($tmp+$i) -Proto $udpstr -OutDir $OutDir -Fname "udp.recv.m$Conn.iter$i" -RecvDir $RecvDir
-        test_send -Conn $Conn -Port ($tmp+$i) -Proto $udpstr -OutDir $OutDir -Fname "udp.send.m$Conn.iter$i" -SendDir $SendDir
+        test_recv -Conn $Conn -Port ($tmp+$i) -Proto $udpstr -OutDir $OutDir -Fname "udp.recv.m$Conn.iter$i" -RecvDir $RecvDir -BufferLen $BufferLen
+        test_send -Conn $Conn -Port ($tmp+$i) -Proto $udpstr -OutDir $OutDir -Fname "udp.send.m$Conn.iter$i" -SendDir $SendDir -BufferLen $BufferLen
     }
 } # test_udp()
 
@@ -96,14 +99,15 @@ function test_tcp {
         [parameter(Mandatory=$true)] [String] $OutDir,
         [parameter(Mandatory=$true)] [Int]    $Conn,
         [parameter(Mandatory=$true)]  [string] $SendDir,
-        [parameter(Mandatory=$true)]  [string] $RecvDir
+        [parameter(Mandatory=$true)]  [string] $RecvDir, 
+        [parameter(Mandatory=$true)]  [Int] $BufferLen
     )
 
     [string] $tcpstr = ""
     [int]    $tmp    = 50002
     for ($i=0; $i -lt $g_iters; $i++) {
-        test_recv -Conn $Conn -Port ($tmp+$i) -Proto $tcpstr -OutDir $OutDir -Fname "tcp.recv.m$Conn.iter$i" -RecvDir $RecvDir
-        test_send -Conn $Conn -Port ($tmp+$i) -Proto $tcpstr -OutDir $OutDir -Fname "tcp.send.m$Conn.iter$i" -SendDir $SendDir
+        test_recv -Conn $Conn -Port ($tmp+$i) -Proto $tcpstr -OutDir $OutDir -Fname "tcp.recv.m$Conn.iter$i" -RecvDir $RecvDir -BufferLen $BufferLen
+        test_send -Conn $Conn -Port ($tmp+$i) -Proto $tcpstr -OutDir $OutDir -Fname "tcp.send.m$Conn.iter$i" -SendDir $SendDir -BufferLen $BufferLen
     }
     Write-Host " "
 } # test_tcp()
@@ -132,8 +136,8 @@ function test_ntttcp {
     # execution time in seconds
     [int] $g_runtime = 60
     [int] $g_ptime   = 2
-    [int]    $g_bufferlen    = 1450
-
+    [int]    $g_bufferlen_udp    = 1450
+    [int]    $g_bufferlen_tcp    = 65536
     # execution time ($g_runtime) in seconds, wu, cd times ($g_ptime) will come from the Config ps1 file, if specified and take precedence over defaults 
     if ($ConfigFile -ne $null) {
         Try
@@ -161,7 +165,7 @@ function test_ntttcp {
     $dirRecv = (Join-Path -Path $RecvDir -ChildPath "tcp") 
     New-Item -ItemType directory -Path $dir | Out-Null
     foreach ($Conn in $ConnList) {
-        test_tcp -Conn $Conn -OutDir $dir -SendDir $dirSend -RecvDir $dirRecv
+        test_tcp -Conn $Conn -OutDir $dir -SendDir $dirSend -RecvDir $dirRecv -BufferLen $g_bufferlen_tcp
         Write-Host " "
     }
 
@@ -178,7 +182,7 @@ function test_ntttcp {
     $dirRecv = (Join-Path -Path $RecvDir -ChildPath "udp") 
     New-Item -ItemType directory -Path $dir | Out-Null
     foreach ($Conn in $ConnList) {
-        test_udp -Conn $Conn -OutDir $dir -SendDir $dirSend -RecvDir $dirRecv
+        test_udp -Conn $Conn -OutDir $dir -SendDir $dirSend -RecvDir $dirRecv -BufferLen $g_bufferlen_udp
         Write-Host " "
     }
 } # test_ntttcp()
