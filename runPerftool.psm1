@@ -214,13 +214,13 @@ Function ProcessCommands{
     [string] $DestIpUserName,
     [Parameter(Mandatory=$True, Position=0, HelpMessage="Dest Machine Password?")]
     [SecureString]$DestIpPassword,
-    [Parameter(ParameterSetName='KeyAuth', Mandatory=$True, Position=0, HelpMessage="Dest Machine Key File?")]
+    [Parameter(ParameterSetName='KeyAuth', Mandatory=$False, Position=0, HelpMessage="Dest Machine Key File?")]
     [String]$DestIpKeyFile = "",
     [Parameter(Mandatory=$True, Position=0, HelpMessage="Src Machine Username?")]
     [string] $SrcIpUserName,
     [Parameter(Mandatory=$True, Position=0, HelpMessage="Src Machine Password?")]
     [SecureString]$SrcIpPassword,
-    [Parameter(ParameterSetName='KeyAuth', Mandatory=$True, Position=0, HelpMessage="Src Machine Key File?")]
+    [Parameter(ParameterSetName='KeyAuth', Mandatory=$False, Position=0, HelpMessage="Src Machine Key File?")]
     [String]$SrcIpKeyFile = "",
     [Parameter(Mandatory=$True, Position=0, HelpMessage="Test Machine Username?")]
     [string] $TestUserName,
