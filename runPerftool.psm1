@@ -356,7 +356,7 @@ Function ProcessToolCommands{
         ssh-keyscan -H -p $ListeningPort $RecvComputerName >> "$homePath/.ssh/known_hosts"
         ssh-keyscan -H -p $ListeningPort $SendComputerName >> "$homePath/.ssh/known_hosts"
         try {
-            if (-Not $KeyAuth.IsPresent) {
+            if (-Not $KeyAuth) {
                 $keyFilePath = "$homePath/.ssh/netperf_rsa"
                 $pubKeyFilePath = "$homePath/.ssh/netperf_rsa.pub"
 
@@ -596,7 +596,7 @@ Function ProcessToolCommands{
             Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockCleanupFirewallRules -ArgumentList ("50000:50512/udp", $SendComputerCreds)
             
             LogWrite "Cleaning up public private key and known hosts that were created as part of script run"
-            if (-Not $KeyAuth.IsPresent) {
+            if (-Not $KeyAuth) {
                 # Delete authorized host from receiver and sender computer
                 Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockRemoveAuthorizedHost 
                 Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockRemoveAuthorizedHost 
