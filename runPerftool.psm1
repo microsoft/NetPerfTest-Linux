@@ -349,6 +349,9 @@ Function ProcessToolCommands{
 
         LogWrite "Adding receiver and sender computer to known hosts"
         # add receiver and sender computer to known host of current computer
+        if ((Test-Path "$homePath/.ssh") -eq $False) {
+            New-Item -Path "$homePath/.ssh" -ItemType Directory
+        }
         ssh-keyscan -H -p $ListeningPort $RecvComputerName >> "$homePath/.ssh/known_hosts"
         ssh-keyscan -H -p $ListeningPort $SendComputerName >> "$homePath/.ssh/known_hosts"
         try {
@@ -361,9 +364,6 @@ Function ProcessToolCommands{
                 if ((Test-Path $keyFilePath) -eq $False) {
                     LogWrite "Creating RSA public/private key pair"
                     # generate public and private key for ssh specific for NetPerfTest
-                    if ((Test-Path "$homePath/.ssh") -eq $False) {
-                        New-Item -Path "$homePath/.ssh" -ItemType Directory
-                    }
                     Write-Output $keyFilePath | ssh-keygen --% -q -t rsa -N ""
                     chmod 600 $keyFilePath
                 }
