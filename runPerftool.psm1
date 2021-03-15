@@ -209,7 +209,7 @@ Function ProcessCommands{
     [Parameter(Mandatory=$True)]  [string]$DestIp,
     [Parameter(Mandatory=$True)] [string]$SrcIp,
     [Parameter(Mandatory=$True)]  [string]$CommandsDir,
-    [Parameter(ParameterSetName='KeyAuth', Mandatory=$False)]  [switch]$KeyAuth,
+    [Parameter(ParameterSetName='KeyAuth', Mandatory=$False)]  [bool]$KeyAuth,
     [Parameter(Mandatory=$True, Position=0, HelpMessage="Dest Machine Username?")]
     [string] $DestIpUserName,
     [Parameter(Mandatory=$True, Position=0, HelpMessage="Dest Machine Password?")]
@@ -245,7 +245,7 @@ Function ProcessCommands{
     [PSCredential] $recvIPCreds = New-Object System.Management.Automation.PSCredential($DestIpUserName, $DestIpPassword)
 
     LogWrite "Processing lagscope commands for Linux" $true
-    ProcessToolCommands -KeyAuth $KeyAuth -RecvKeyFilePath $DestIpKeyFile -SendKeyFilePath $SrcIpKeyFile -Toolname "lagscope" -RecvComputerName $recvComputerName -RecvComputerCreds $recvIPCreds -SendComputerName $sendComputerName -SendComputerCreds $sendIPCreds -TestUserName $TestUserName -CommandsDir $CommandsDir -Bcleanup $Bcleanup -BZip $ZipResults -TimeoutValueBetweenCommandPairs $TimeoutValueInSeconds -PollTimeInSeconds $PollTimeInSeconds -ListeningPort $ListeningPort -FirewallPortMin $FirewallPortMin -FirewallPortMax $FirewallPortMax -RecvDir $recvDir -SendDir $sendDir
+    ProcessToolCommands -KeyAuth:$KeyAuth -RecvKeyFilePath $DestIpKeyFile -SendKeyFilePath $SrcIpKeyFile -Toolname "lagscope" -RecvComputerName $recvComputerName -RecvComputerCreds $recvIPCreds -SendComputerName $sendComputerName -SendComputerCreds $sendIPCreds -TestUserName $TestUserName -CommandsDir $CommandsDir -Bcleanup $Bcleanup -BZip $ZipResults -TimeoutValueBetweenCommandPairs $TimeoutValueInSeconds -PollTimeInSeconds $PollTimeInSeconds -ListeningPort $ListeningPort -FirewallPortMin $FirewallPortMin -FirewallPortMax $FirewallPortMax -RecvDir $recvDir -SendDir $sendDir
 
     LogWrite "Processing ntttcp commands for Linux" $true
     ProcessToolCommands -KeyAuth $KeyAuth -RecvKeyFilePath $DestIpKeyFile -SendKeyFilePath $SrcIpKeyFile -Toolname "ntttcp" -RecvComputerName $recvComputerName -RecvComputerCreds $recvIPCreds -SendComputerName $sendComputerName -SendComputerCreds $sendIPCreds -TestUserName $TestUserName -CommandsDir $CommandsDir -Bcleanup $Bcleanup -BZip $ZipResults -TimeoutValueBetweenCommandPairs $TimeoutValueInSeconds -PollTimeInSeconds $PollTimeInSeconds -ListeningPort $ListeningPort -FirewallPortMin $FirewallPortMin -FirewallPortMax $FirewallPortMax -RecvDir $recvDir -SendDir $sendDir
@@ -320,7 +320,7 @@ Function ProcessToolCommands{
     param(
         [Parameter(Mandatory=$True)] [string]$RecvComputerName,
         [Parameter(Mandatory=$True)] [string]$SendComputerName,
-        [Parameter(Mandatory=$False)] [switch]$KeyAuth,
+        [Parameter(Mandatory=$False)] [bool]$KeyAuth,
         [Parameter(Mandatory=$True)] [string]$CommandsDir,
         [Parameter(Mandatory=$True)] [string]$Bcleanup, 
         [Parameter(Mandatory=$False)] [string]$Toolname = "ntttcp", 
