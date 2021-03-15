@@ -346,6 +346,7 @@ Function ProcessToolCommands{
         [System.IO.TextReader] $sendCommands = $null
     
         $toolpath = "./{0}" -f $Toolname
+        $homePath = "/home/$TestUserName"
 
         LogWrite "Adding receiver and sender computer to known hosts"
         # add receiver and sender computer to known host of current computer
@@ -356,7 +357,6 @@ Function ProcessToolCommands{
         ssh-keyscan -H -p $ListeningPort $SendComputerName >> "$homePath/.ssh/known_hosts"
         try {
             if (-Not $KeyAuth.IsPresent) {
-                $homePath = "/home/$TestUserName"
                 $keyFilePath = "$homePath/.ssh/netperf_rsa"
                 $pubKeyFilePath = "$homePath/.ssh/netperf_rsa.pub"
 
