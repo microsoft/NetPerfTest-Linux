@@ -209,7 +209,7 @@ Function ProcessCommands{
     [Parameter(Mandatory=$True)]  [string]$DestIp,
     [Parameter(Mandatory=$True)] [string]$SrcIp,
     [Parameter(Mandatory=$True)]  [string]$CommandsDir,
-    [Parameter(ParameterSetName='KeyAuth', Mandatory=$False)]  [bool]$KeyAuth,
+    [Parameter(ParameterSetName='KeyAuth', Mandatory=$False)]  [bool]$KeyAuth = $False,
     [Parameter(Mandatory=$True, Position=0, HelpMessage="Dest Machine Username?")]
     [string] $DestIpUserName,
     [Parameter(Mandatory=$True, Position=0, HelpMessage="Dest Machine Password?")]
@@ -320,7 +320,7 @@ Function ProcessToolCommands{
     param(
         [Parameter(Mandatory=$True)] [string]$RecvComputerName,
         [Parameter(Mandatory=$True)] [string]$SendComputerName,
-        [Parameter(Mandatory=$False)] [bool]$KeyAuth,
+        [Parameter(Mandatory=$False)] [bool]$KeyAuth = $False,
         [Parameter(Mandatory=$True)] [string]$CommandsDir,
         [Parameter(Mandatory=$True)] [string]$Bcleanup, 
         [Parameter(Mandatory=$False)] [string]$Toolname = "ntttcp", 
