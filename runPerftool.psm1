@@ -209,18 +209,18 @@ Function ProcessCommands{
     [Parameter(Mandatory=$True)]  [string]$DestIp,
     [Parameter(Mandatory=$True)] [string]$SrcIp,
     [Parameter(Mandatory=$True)]  [string]$CommandsDir,
-    [Parameter(ParameterSetName='KeyAuth', Mandatory=$False)]  [bool]$KeyAuth = $False,
+    [Parameter(ParameterSetName='PassAuth', Mandatory=$False)]  [bool]$PassAuth = $False,
     [Parameter(Mandatory=$True, Position=0, HelpMessage="Dest Machine Username?")]
     [string] $DestIpUserName,
     [Parameter(Mandatory=$True, Position=0, HelpMessage="Dest Machine Password?")]
     [SecureString]$DestIpPassword,
-    [Parameter(ParameterSetName='KeyAuth', Mandatory=$False, Position=0, HelpMessage="Dest Machine Key File?")]
+    [Parameter(Mandatory=$False, Position=0, HelpMessage="Dest Machine Key File?")]
     [String]$DestIpKeyFile = "",
     [Parameter(Mandatory=$True, Position=0, HelpMessage="Src Machine Username?")]
     [string] $SrcIpUserName,
     [Parameter(Mandatory=$True, Position=0, HelpMessage="Src Machine Password?")]
     [SecureString]$SrcIpPassword,
-    [Parameter(ParameterSetName='KeyAuth', Mandatory=$False, Position=0, HelpMessage="Src Machine Key File?")]
+    [Parameter(Mandatory=$False, Position=0, HelpMessage="Src Machine Key File?")]
     [String]$SrcIpKeyFile = "",
     [Parameter(Mandatory=$True, Position=0, HelpMessage="Test Machine Username?")]
     [string] $TestUserName,
@@ -245,10 +245,10 @@ Function ProcessCommands{
     [PSCredential] $recvIPCreds = New-Object System.Management.Automation.PSCredential($DestIpUserName, $DestIpPassword)
 
     LogWrite "Processing lagscope commands for Linux" $true
-    ProcessToolCommands -KeyAuth:$KeyAuth -RecvKeyFilePath $DestIpKeyFile -SendKeyFilePath $SrcIpKeyFile -Toolname "lagscope" -RecvComputerName $recvComputerName -RecvComputerCreds $recvIPCreds -SendComputerName $sendComputerName -SendComputerCreds $sendIPCreds -TestUserName $TestUserName -CommandsDir $CommandsDir -Bcleanup $Bcleanup -BZip $ZipResults -TimeoutValueBetweenCommandPairs $TimeoutValueInSeconds -PollTimeInSeconds $PollTimeInSeconds -ListeningPort $ListeningPort -FirewallPortMin $FirewallPortMin -FirewallPortMax $FirewallPortMax -RecvDir $recvDir -SendDir $sendDir
+    ProcessToolCommands -PassAuth:$PassAuth -RecvKeyFilePath $DestIpKeyFile -SendKeyFilePath $SrcIpKeyFile -Toolname "lagscope" -RecvComputerName $recvComputerName -RecvComputerCreds $recvIPCreds -SendComputerName $sendComputerName -SendComputerCreds $sendIPCreds -TestUserName $TestUserName -CommandsDir $CommandsDir -Bcleanup $Bcleanup -BZip $ZipResults -TimeoutValueBetweenCommandPairs $TimeoutValueInSeconds -PollTimeInSeconds $PollTimeInSeconds -ListeningPort $ListeningPort -FirewallPortMin $FirewallPortMin -FirewallPortMax $FirewallPortMax -RecvDir $recvDir -SendDir $sendDir
 
     LogWrite "Processing ntttcp commands for Linux" $true
-    ProcessToolCommands -KeyAuth $KeyAuth -RecvKeyFilePath $DestIpKeyFile -SendKeyFilePath $SrcIpKeyFile -Toolname "ntttcp" -RecvComputerName $recvComputerName -RecvComputerCreds $recvIPCreds -SendComputerName $sendComputerName -SendComputerCreds $sendIPCreds -TestUserName $TestUserName -CommandsDir $CommandsDir -Bcleanup $Bcleanup -BZip $ZipResults -TimeoutValueBetweenCommandPairs $TimeoutValueInSeconds -PollTimeInSeconds $PollTimeInSeconds -ListeningPort $ListeningPort -FirewallPortMin $FirewallPortMin -FirewallPortMax $FirewallPortMax -RecvDir $recvDir -SendDir $sendDir
+    ProcessToolCommands -PassAuth $PassAuth -RecvKeyFilePath $DestIpKeyFile -SendKeyFilePath $SrcIpKeyFile -Toolname "ntttcp" -RecvComputerName $recvComputerName -RecvComputerCreds $recvIPCreds -SendComputerName $sendComputerName -SendComputerCreds $sendIPCreds -TestUserName $TestUserName -CommandsDir $CommandsDir -Bcleanup $Bcleanup -BZip $ZipResults -TimeoutValueBetweenCommandPairs $TimeoutValueInSeconds -PollTimeInSeconds $PollTimeInSeconds -ListeningPort $ListeningPort -FirewallPortMin $FirewallPortMin -FirewallPortMax $FirewallPortMax -RecvDir $recvDir -SendDir $sendDir
 
     LogWrite "ProcessCommands Done!" $true
     Move-Item -Force -Path $Logfile -Destination "$CommandsDir" -ErrorAction Ignore
@@ -320,7 +320,7 @@ Function ProcessToolCommands{
     param(
         [Parameter(Mandatory=$True)] [string]$RecvComputerName,
         [Parameter(Mandatory=$True)] [string]$SendComputerName,
-        [Parameter(Mandatory=$False)] [bool]$KeyAuth = $False,
+        [Parameter(Mandatory=$False)] [bool]$PassAuth = $False,
         [Parameter(Mandatory=$True)] [string]$CommandsDir,
         [Parameter(Mandatory=$True)] [string]$Bcleanup, 
         [Parameter(Mandatory=$False)] [string]$Toolname = "ntttcp", 
@@ -340,7 +340,7 @@ Function ProcessToolCommands{
         )
         [bool] $gracefulCleanup = $False
         # delay to let credential (public key) propagate before remoting
-        $credPropagationTimeInSecond = 2
+        $credPropagationTimeInSecond = 3
     
         [System.IO.TextReader] $recvCommands = $null
         [System.IO.TextReader] $sendCommands = $null
@@ -356,7 +356,7 @@ Function ProcessToolCommands{
         ssh-keyscan -H -p $ListeningPort $RecvComputerName >> "$homePath/.ssh/known_hosts"
         ssh-keyscan -H -p $ListeningPort $SendComputerName >> "$homePath/.ssh/known_hosts"
         try {
-            if (-Not $KeyAuth) {
+            if ($PassAuth) {
                 $keyFilePath = "$homePath/.ssh/netperf_rsa"
                 $pubKeyFilePath = "$homePath/.ssh/netperf_rsa.pub"
 
@@ -596,7 +596,7 @@ Function ProcessToolCommands{
             Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockCleanupFirewallRules -ArgumentList ("50000:50512/udp", $SendComputerCreds)
             
             LogWrite "Cleaning up public private key and known hosts that were created as part of script run"
-            if (-Not $KeyAuth) {
+            if ($PassAuth) {
                 # Delete authorized host from receiver and sender computer
                 Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockRemoveAuthorizedHost 
                 Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockRemoveAuthorizedHost 
