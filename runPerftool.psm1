@@ -144,6 +144,9 @@ $ScriptBlockRemoveBinaries = {
 .PARAMETER SrcIp
     Required Parameter. The IpAddr of the source machine that's going to be sending data for the duration of the throughput tests
 
+.PARAMETER PassAuth
+    Boolean. Set to true if using password authentication to connect to machines
+
 .PARAMETER DestIpUserName
     Required Parameter. Gets domain\username needed to connect to DestIp Machine
 
@@ -151,12 +154,18 @@ $ScriptBlockRemoveBinaries = {
     Required Parameter. Gets password needed to connect to DestIp Machine. 
     Password will be stored as Secure String and chars will not be displayed on the console.
 
+.PARAMETER DestIpKeyPath
+    File path to private rsa key needed to connect to DestIp Machine. Only required if -PassAuth is false.
+
 .PARAMETER SrcIpUserName
     Required Parameter. Gets domain\username needed to connect to SrcIp Machine
 
 .PARAMETER SrcIpPassword
     Required Parameter. Gets password needed to connect to SrcIp Machine. 
     Password will be stored as Secure String and chars will not be displayed on the console
+
+.PARAMETER SrcIpKeyPath
+    File path to private rsa key needed to connect to SrcIp Machine. Only required if -PassAuth is false.
 
 .PARAMETER TestUserName
     Required Parameter. Gets username of current machine to get correct path to commands 
@@ -270,6 +279,9 @@ Function ProcessCommands{
 .PARAMETER SendComputerName
     The IpAddr of the sender machine that's going to send data for the duration of the throughput tests
 
+.PARAMETER PassAuth
+    Boolean. Set to true if using password authentication to connect to machines
+
 .PARAMETER TestUserName
     Required Parameter. Gets username of current machine to get correct path to commands 
 
@@ -289,6 +301,12 @@ Function ProcessCommands{
 
 .PARAMETER RecvComputerCreds
     Optional PSCredentials to connect to the Receiver machine
+
+.PARAMETER SendKeyFilePath
+    File path to private rsa key needed to connect to Send Machine. Only required if -PassAuth is false.
+
+.PARAMETER RecvKeyFilePath
+    File path to private rsa key needed to connect to Recv Machine. Only required if -PassAuth is false.
 
 .PARAMETER BZip
     Required parameter. The function creates folders and subfolders on remote machines to house the result files of the individual commands. BZip param decides 
