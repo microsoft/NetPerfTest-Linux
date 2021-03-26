@@ -12,13 +12,17 @@ These tools are necessary the run the PowerShell scripts in NetPerfTest. Some to
 * PuTTTY - specifically plink command
 * ufw, or Uncomplicated Firewall
 
+If SSH password authentication is disabled on the VM, the orchestrating machine must have copied its own public ssh key to the destination and source machine.
+
 ## Command Generation
 Once pre-requisite tools have been installed, we can start the testing process. 
 First, we must generate a bunch of relevant networking tests between these machines. 
-Now that the folder is created, we're ready to generate the commands using the PERFTEST cmdlet :
+Now that the folder is created, we're ready to generate the commands using the PERFTEST cmdlet 
+The TestUserName is the username of the orchestrating machine to determine the location of the command. 
+:
 
 ```PowerShell
-./PERFTEST.PS1 -DestIp "DestinationMachineIP" -SrcIP "SourceMachineIP" -OutDir "Temp/MyDirectoryForTesting" -DestUserName "DestinationUserName" -SrcUserName "SourceUserName"
+./PERFTEST.PS1 -DestIp "DestinationMachineIP" -SrcIP "SourceMachineIP" -OutDir "Temp/MyDirectoryForTesting" -DestUserName "DestinationUserName" -SrcUserName "SourceUserName" -TestUserName "TestUserName"
 ```
 
 The OutDir folder should not contain the home path.
@@ -27,10 +31,16 @@ The OutDir folder should not contain the home path.
 
 Before proceeding to run the commands/tests that were generated above, we must enable Powershell Remoting over SSH and enable the firewall. This script will automatically enable PowerShell Remoting over SSH, and will thus modify the configuration file (ej. sshd_config) and firewall rules.  There is a cleanup script that is recommended after collecting the results (more on that below, in the Cleanup section).
 
+If you choose to use password authentication, use the switch -KeyAuth.
+
 To setup the machine(s), run the following command on each machine to test (ej. Destination and Source machine)
 
 ```PowerShell
 SetupTearDown.ps1 -Setup
+```
+
+```PowerShell
+SetupTearDown.ps1 -Setup -PassAuth
 ```
 
 You will be prompted for password for the computer you are running the script on to enable to firewall and edit files. It is a Secure-string so your password will not be displayed or stored in clear text at any point.
@@ -48,9 +58,14 @@ We will thus need to import the Module like this: ```Import-Module -Force .\runP
 We will then invoke a single function in this module that will process all the commands and run them and gather the results. 
 For further help with this function, run ```Get-Help ProcessCommands```
 
-The command to run tests is:
+The command to run tests using password authentication is:
 ```
-ProcessCommands -DestIp "DestinationMachineIP" -SrcIp "SourceMachineIP" -CommandsDir "Temp/MyDirectoryForTesting/msdbg.CurrentMachineName.perftest" -SrcIpUserName SrcUserName -DestIpUserName DestUserName
+ProcessCommands -DestIp "DestinationMachineIP" -SrcIp "SourceMachineIP" -CommandsDir "Temp/MyDirectoryForTesting/msdbg.CurrentMachineName.perftest" -SrcIpUserName SrcUserName -DestIpUserName DestUserName -TestUserName TestUserName -PassAuth
+```
+
+The command to run tests using public key authentication is:
+```
+ProcessCommands -DestIp "DestinationMachineIP" -SrcIp "SourceMachineIP" -CommandsDir "Temp/MyDirectoryForTesting/msdbg.CurrentMachineName.perftest" -SrcIpUserName SrcUserName -DestIpUserName DestUserName -TestUserName TestUserName -SrcIpKeyPath SrcPrivateKeyFilePath -DestIpKeyPath DestPrivateKeyFilePath
 ```
 
 You will be prompted for password for credentials of both the source and destination machine. It a Secure-string so your password will not be displayed or stored in clear text at any point. Do not include the home path in the command directory

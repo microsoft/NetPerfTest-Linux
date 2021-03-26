@@ -14,7 +14,11 @@
 
 .PARAMETER Password
     Required Parameter. Get the password of this computer to modify firewall permissions.
-.DESCRIPTION
+
+.PARAMETER PassAuth
+    Required Parameter. Get the password of this computer to modify firewall permissions.
+
+    .DESCRIPTION
     Run this script to setup your machine for PS Remoting so that you can leverage the functionality of runPerfTool.psm1
     Run this script at the end of the tool runs to restore state on the machines.
     Ex: SetupTearDown.ps1 -Setup or SetupTearDown.ps1 -Cleanup
@@ -24,20 +28,25 @@ Param(
     [switch] $Cleanup,
     [Parameter(Mandatory=$False)]  $Port=5985,
     [Parameter(Mandatory=$True, Position=0, HelpMessage="Machine Password?")]
-    [SecureString]$Password
+    [SecureString]$Password, 
+    [Parameter(Mandatory=$False)] [bool] $PassAuth
 )
 
 Function SetupRemoting{
     param(
         [Parameter(Mandatory=$True)] [PSCredential] $Creds,
-        [Parameter(Mandatory=$False)]  $Port=5985
+        [Parameter(Mandatory=$False)]  $Port=5985, 
+        [Parameter(Mandatory=$False)] [bool] $PassAuth
     )
 
     Write-Host "Installing PSRemoting via SSH on this computer..."
     Write-Host "Editing sshd_config file to allow for public key and password authentication for port $Port"
     # edit sshd_config to listen to port and allow public key and password authentication
     Write-Output $Creds.GetNetworkCredential().Password | sudo -S sed -i "s/#\?\(PubkeyAuthentication\s*\).*$/\1yes/" /etc/ssh/sshd_config
-    sudo sed -i 's/#\?\(PasswordAuthentication\s*\).*$/\1yes/' /etc/ssh/sshd_config
+    if ($PassAuth) 
+    {
+        sudo sed -i 's/#\?\(PasswordAuthentication\s*\).*$/\1yes/' /etc/ssh/sshd_config
+    }
     sudo sed -i "s/#\?\(Port\s*\).*$/\1$Port/" /etc/ssh/sshd_config
     # allow for powershell remoting via ssh 
     $pwshCommand = Get-Content -Path /etc/ssh/sshd_config | Where-Object {$_.Contains("Subsystem powershell /usr/bin/pwsh -sshs -NoLogo")}
@@ -85,7 +94,7 @@ function main {
         # create credential blob to store username and password securely 
         [PSCredential] $creds = New-Object System.Management.Automation.PSCredential("user", $Password)
         if($Setup.IsPresent) {
-            SetupRemoting -Creds $creds -Port $Port
+            SetupRemoting -Creds $creds -Port $Port -PassAuth $PassAuth
         } elseif($Cleanup.IsPresent) {
             CleanupRemoting -Creds $creds -Port $Port
         } else {
