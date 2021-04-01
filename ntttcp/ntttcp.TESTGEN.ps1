@@ -90,8 +90,8 @@ function test_protocol {
         {
             for ($i=0; $i -lt $Config.Iterations; $i++) 
             {
-                test_recv -Conn $Conn -Port ($Config.StartPort+$i) -Proto $protoParam -OutDir $OutDir -Fname "$Proto.recv.m$Conn.iter$i" -RecvDir $RecvDir -BufferLen $BufferLen
-                test_send -Conn $Conn -Port ($Config.StartPort+$i) -Proto $protoParam -OutDir $OutDir -Fname "$Proto.send.m$Conn.iter$i" -SendDir $SendDir -BufferLen $BufferLen
+                test_recv -Conn $Conn -Port ($Config.StartPort+$i) -Proto $protoParam -OutDir $OutDir -Fname "$Proto.recv.m$Conn.iter$i" -RecvDir $RecvDir -BufferLen $BufferLen -Config $Config
+                test_send -Conn $Conn -Port ($Config.StartPort+$i) -Proto $protoParam -OutDir $OutDir -Fname "$Proto.send.m$Conn.iter$i" -SendDir $SendDir -BufferLen $BufferLen -Config $Config
             }        
         }
     }
