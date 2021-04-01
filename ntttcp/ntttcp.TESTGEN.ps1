@@ -123,6 +123,7 @@ function test_ntttcp {
         $tcpDir = (Join-Path -Path $OutDir -ChildPath "tcp") 
         $tcpDirSend = (Join-Path -Path $SendDir -ChildPath "tcp") 
         $tcpDirRecv = (Join-Path -Path $RecvDir -ChildPath "tcp")
+        New-Item -ItemType directory -Path $tcpDir | Out-Null
         test_protocol -OutDir $tcpDir -SendDir $tcpDirSend -RecvDir $tcpDirRecv -ConnList $Config.ConnectionsTcp -BufferLenList $Config.BufferLenTcp -Config $Config -Proto "tcp" 
     }
 
@@ -132,6 +133,7 @@ function test_ntttcp {
         $udpDir = (Join-Path -Path $OutDir -ChildPath "udp") 
         $udpDirSend = (Join-Path -Path $SendDir -ChildPath "udp") 
         $udpDirRecv = (Join-Path -Path $RecvDir -ChildPath "udp") 
+        New-Item -ItemType directory -Path $udpDir | Out-Null
         test_protocol -OutDir $udpDir -SendDir $udpDirSend -RecvDir $udpDirRecv -ConnList $Config.ConnectionsUdp -BufferLenList $Config.BufferLenUdp -Config $Config -Proto "udp" 
     }
 
