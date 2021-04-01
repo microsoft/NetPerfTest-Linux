@@ -165,7 +165,7 @@ function test_main {
     $dir = $dir -replace ' ','` '
     
     New-Item -ItemType directory -Path $dir | Out-Null
-    Write-Host "test_ntttcp -OutDir $dir -ConfigFile $g_ConfigFile"
+    Write-Host "test_ntttcp -OutDir $dir -ConfigName $ConfigName"
 
-    test_ntttcp -OutDir $dir -ConfigFile $g_ConfigFile -SendDir $sendDir -RecvDir $recvDir
+    test_ntttcp -OutDir $dir -Config $Config -SendDir $sendDir -RecvDir $recvDir
 } test_main @PSBoundParameters # Entry Point
