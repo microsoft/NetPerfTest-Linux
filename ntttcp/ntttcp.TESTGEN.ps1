@@ -40,11 +40,11 @@ function test_recv {
     )
 
     [string] $out = (Join-Path -Path $RecvDir -ChildPath "$Fname")
-    [string] $cmd = "./ntttcp -r -m  `"$Conn,*,$global:DestIp`" $Proto -V -b $BufferLen -W $($global:Config.Warmup) -C $($global:Config.Cooldown) -p $Port -t $($global:Config.Time) $($global:Config.RecvOptions) -x $out.xml > $out.txt"
+    [string] $cmd = "./ntttcp -r -m  `"$Conn,*,$g_DestIp`" $Proto -V -b $BufferLen -W $($g_Config.Warmup) -C $($g_Config.Cooldown) -p $Port -t $($g_Config.Time) $($g_Config.RecvOptions) -x $out.xml > $out.txt"
     [string] $cmdOut = (Join-Path -Path $OutDir -ChildPath "$Fname")
     Write-Output $cmd | Out-File -Encoding ascii -Append "$cmdOut.txt"
-    Write-Output $cmd | Out-File -Encoding ascii -Append $global:log
-    Write-Output $cmd | Out-File -Encoding ascii -Append $global:logRecv
+    Write-Output $cmd | Out-File -Encoding ascii -Append $g_log
+    Write-Output $cmd | Out-File -Encoding ascii -Append $g_logRecv
     Write-Host   $cmd 
 
 } # test_recv()
@@ -62,11 +62,11 @@ function test_send {
     )
 
     [string] $out = (Join-Path -Path $SendDir -ChildPath "$Fname")
-    [string] $cmd = "./ntttcp -s -m `"$Conn,*,$global:DestIp`" $Proto -V -b $BufferLen -W $($global:Config.Warmup) -C $($global:Config.Cooldown) -p $Port -t $($global:Config.Time) $($global:Config.SendOptions) -x $out.xml > $out.txt"
+    [string] $cmd = "./ntttcp -s -m `"$Conn,*,$g_DestIp`" $Proto -V -b $BufferLen -W $($g_Config.Warmup) -C $($g_Config.Cooldown) -p $Port -t $($g_Config.Time) $($g_Config.SendOptions) -x $out.xml > $out.txt"
     [string] $cmdOut = (Join-Path -Path $OutDir -ChildPath "$Fname")
     Write-Output $cmd | Out-File -Encoding ascii -Append "$cmdOut.txt"
-    Write-Output $cmd | Out-File -Encoding ascii -Append $global:log
-    Write-Output $cmd | Out-File -Encoding ascii -Append $global:logSend    
+    Write-Output $cmd | Out-File -Encoding ascii -Append $g_log
+    Write-Output $cmd | Out-File -Encoding ascii -Append $g_logSend    
     Write-Host   $cmd 
 } # test_send()
 
@@ -74,21 +74,24 @@ function test_protocol {
     [CmdletBinding()]
     Param(
         [parameter(Mandatory=$true)] [String] $OutDir,
-        [parameter(Mandatory=$true)] [Object[]] $ConnList,
         [parameter(Mandatory=$true)]  [string] $SendDir,
         [parameter(Mandatory=$true)]  [string] $RecvDir, 
-        [parameter(Mandatory=$true)]  [Object[]] $BufferLenList,
         [parameter(Mandatory=$true)] [String] $Proto
     )
+    banner -Msg "$Proto Tests"
+    $ProtoOutDir = (Join-Path -Path $OutDir -ChildPath "$Proto") 
+    $ProtoSendDir = (Join-Path -Path $SendDir -ChildPath "$Proto") 
+    $ProtoRecvDir = (Join-Path -Path $RecvDir -ChildPath "$Proto") 
+    New-Item -ItemType directory -Path $ProtoOutDir | Out-Null
     $protoParam = if ($Proto -eq "udp") {"-u"} else {""};
-    foreach ($BufferLen in $BufferLenList)
+    foreach ($BufferLen in $g_Config.($Proto).BufferLen)
     {
-        foreach ($Conn in $ConnList)
+        foreach ($Conn in $g_Config.($Proto).Connections)
         {
-            for ($i=0; $i -lt $global:Config.Iterations; $i++) 
+            for ($i=0; $i -lt $g_Config.Iterations; $i++) 
             {
-                test_recv -Conn $Conn -Port ($global:Config.StartPort+$i) -Proto $protoParam -OutDir $OutDir -Fname "$Proto.recv.m$Conn.iter$i" -RecvDir $RecvDir -BufferLen $BufferLen 
-                test_send -Conn $Conn -Port ($global:Config.StartPort+$i) -Proto $protoParam -OutDir $OutDir -Fname "$Proto.send.m$Conn.iter$i" -SendDir $SendDir -BufferLen $BufferLen
+                test_recv -Conn $Conn -Port ($g_Config.StartPort+$i) -Proto $protoParam -OutDir $ProtoOutDir -Fname "$Proto.recv.m$Conn.l$BufferLen.iter$i" -RecvDir $ProtoRecvDir -BufferLen $BufferLen 
+                test_send -Conn $Conn -Port ($g_Config.StartPort+$i) -Proto $protoParam -OutDir $ProtoOutDir -Fname "$Proto.send.m$Conn.l$BufferLen.iter$i" -SendDir $ProtoSendDir -BufferLen $BufferLen
             }        
         }
     }
@@ -110,28 +113,17 @@ function test_ntttcp {
     [CmdletBinding()]
     Param(
         [parameter(Mandatory=$true)] [String] $OutDir,
-        [parameter(Mandatory=$true)] [Object] $global:Config,
         [parameter(Mandatory=$true)]  [string] $SendDir,
         [parameter(Mandatory=$true)]  [string] $RecvDir
     )
-    if ($global:Config.Tcp)
+    if ($null -ne $g_Config.tcp)
     {
-        banner -Msg "TCP Tests"
-        $tcpDir = (Join-Path -Path $OutDir -ChildPath "tcp") 
-        $tcpDirSend = (Join-Path -Path $SendDir -ChildPath "tcp") 
-        $tcpDirRecv = (Join-Path -Path $RecvDir -ChildPath "tcp")
-        New-Item -ItemType directory -Path $tcpDir | Out-Null
-        test_protocol -OutDir $tcpDir -SendDir $tcpDirSend -RecvDir $tcpDirRecv -ConnList $global:Config.ConnectionsTcp -BufferLenList $global:Config.BufferLenTcp -Proto "tcp" 
+        test_protocol -OutDir $OutDir -SendDir $SendDir -RecvDir $RecvDir -Proto "tcp" 
     }
 
-    if ($global:Config.Udp)
+    if ($null -ne $g_Config.udp)
     {
-        banner -Msg "UDP Tests"
-        $udpDir = (Join-Path -Path $OutDir -ChildPath "udp") 
-        $udpDirSend = (Join-Path -Path $SendDir -ChildPath "udp") 
-        $udpDirRecv = (Join-Path -Path $RecvDir -ChildPath "udp") 
-        New-Item -ItemType directory -Path $udpDir | Out-Null
-        test_protocol -OutDir $udpDir -SendDir $udpDirSend -RecvDir $udpDirRecv -ConnList $global:Config.ConnectionsUdp -BufferLenList $global:Config.BufferLenUdp -Proto "udp" 
+        test_protocol -OutDir $OutDir -SendDir $SendDir -RecvDir $RecvDir -Proto "udp" 
     }
 
 } # test_ntttcp()
@@ -150,13 +142,13 @@ function test_main {
     )
     input_display
     $allConfig = Get-Content ./ntttcp/ntttcp.Config.json | ConvertFrom-Json
-    $global:Config = $allConfig.("Ntttcp$ConfigName")
-    [string] $global:DestIp     = $DestIp.Trim()
-    [string] $global:SrcIp      = $SrcIp.Trim()
+    $g_Config = $allConfig.("Ntttcp$ConfigName")
+    [string] $g_DestIp     = $DestIp.Trim()
+    [string] $g_SrcIp      = $SrcIp.Trim()
     [string] $dir          = (Join-Path -Path $OutDir -ChildPath "ntttcp") 
-    [string] $global:log        = "$dir/NTTTCP.Commands.txt"
-    [string] $global:logSend    = "$dir/NTTTCP.Commands.Send.txt"
-    [string] $global:logRecv    = "$dir/NTTTCP.Commands.Recv.txt"
+    [string] $g_log        = "$dir/NTTTCP.Commands.txt"
+    [string] $g_logSend    = "$dir/NTTTCP.Commands.Send.txt"
+    [string] $g_logRecv    = "$dir/NTTTCP.Commands.Recv.txt"
     [string] $sendDir   = (Join-Path -Path $SrcDir -ChildPath "ntttcp")
     [string] $recvDir   = (Join-Path -Path $DestDir -ChildPath "ntttcp")
 
@@ -164,7 +156,7 @@ function test_main {
     $dir = $dir -replace ' ','` '
     
     New-Item -ItemType directory -Path $dir | Out-Null
-    Write-Host "test_ntttcp -OutDir $dir -ConfigName $global:ConfigName"
+    Write-Host "test_ntttcp -OutDir $dir -ConfigName $g_ConfigName"
 
-    test_ntttcp -OutDir $dir -Config $global:Config -SendDir $sendDir -RecvDir $recvDir
+    test_ntttcp -OutDir $dir -Config $g_Config -SendDir $sendDir -RecvDir $recvDir
 } test_main @PSBoundParameters # Entry Point
