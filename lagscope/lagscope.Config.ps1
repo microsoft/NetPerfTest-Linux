@@ -1,8 +1,6 @@
 $lagscopeDefault = @{
     '-Iterations'     = 5
     '-StartPort'      = 50001
-    '-BufferSize'     = @(65536)
-    '-MessageSize'    = 4
     '-Time'           = 10
     '-PingIterations' = 20000   
     '-Options'        = $null
@@ -11,8 +9,7 @@ $lagscopeDefault = @{
 $lagscopeAzure = @{
     '-Iterations'     = 5
     '-StartPort'      = 50001
-    '-BufferSize'     = @(65536)
-    '-MessageSize'    = 4
+    '-Time'           = 0
     '-PingIterations' = 20000
     '-Options'        = $null
 } 

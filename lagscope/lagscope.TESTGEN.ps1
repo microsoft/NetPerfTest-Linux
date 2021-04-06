@@ -59,8 +59,8 @@ function test_send {
     [int] $rangeus  = 10
     [int] $rangemax = 98
 
-    [string] $out        = (Join-Path -Path $SendDir -ChildPath "$Fname")
-    [string] $cmd = "./lagscope $Oper -s`"$g_DestIp`" -p$Port -V $($g_Config.Options) -H -c$rangemax -l$rangeus -P`"$out.per.json`" -R`"$out.data.csv`" > `"$out.txt`""
+    [string] $out    = (Join-Path -Path $SendDir -ChildPath "$Fname")
+    [string] $cmd    = "./lagscope $Oper -s`"$g_DestIp`" -p$Port -V $($g_Config.Options) -H -c$rangemax -l$rangeus -P`"$out.per.json`" -R`"$out.data.csv`" > `"$out.txt`""
     [string] $cmdOut = (Join-Path -Path $OutDir -ChildPath "$Fname")
     Write-Output $cmd | Out-File -Encoding ascii -Append "$cmdOut.txt"
     Write-Output $cmd | Out-File -Encoding ascii -Append $g_log
@@ -78,8 +78,7 @@ function test_operations {
         [parameter(Mandatory=$true)]  [string] $Oper
     )
 
-    for ($i=0; $i -lt $g_Config.Iterations; $i++) 
-    {
+    for ($i=0; $i -lt $g_Config.Iterations; $i++) {
         [int] $portstart = $g_Config.StartPort + ($i * $g_Config.Iterations)
         test_send -Port $portstart -Oper $Oper -SendDir $SendDir -Fname "$Fname.iter$i" -OutDir $OutDir
         test_recv -Port $portstart
@@ -96,15 +95,13 @@ function test_lagscope_generate {
 
     # Iteration Tests capturing each transaction time
     # - Measures over input samples
-    if ($g_Config.PingIterations -gt 0)
-    {
+    if ($g_Config.PingIterations -gt 0) {
         banner -Msg "Iteration Tests: [tcp] operations per bounded iterations"
         test_protocol -Oper "-n$($g_Config.PingIterations)" -OutDir $OutDir -Fname "tcp.i$($g_Config.PingIterations)" -SendDir $SendDir -RecvDir
     }
     # Transactions per 10s
     # - Measures operations per bounded time.
-    if ($g_Config.Time -gt 0)
-    {
+    if ($g_Config.Time -gt 0) {
         banner -Msg "Time Tests: [tcp] operations per bounded time"
         test_protocol -Oper "-t$($g_Config.Time)" -OutDir $OutDir -Fname "tcp.t$($g_Config.Time)" -SendDir $SendDir -RecvDir $RecvDir
     }

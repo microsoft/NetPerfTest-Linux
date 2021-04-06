@@ -84,12 +84,9 @@ function test_protocol {
     $ProtoRecvDir = (Join-Path -Path $RecvDir -ChildPath "$Proto") 
     New-Item -ItemType directory -Path $ProtoOutDir | Out-Null
     $protoParam = if ($Proto -eq "udp") {"-u"} else {""};
-    foreach ($BufferLen in $g_Config.($Proto).BufferLen)
-    {
-        foreach ($Conn in $g_Config.($Proto).Connections)
-        {
-            for ($i=0; $i -lt $g_Config.Iterations; $i++) 
-            {
+    foreach ($BufferLen in $g_Config.($Proto).BufferLen) {
+        foreach ($Conn in $g_Config.($Proto).Connections) {
+            for ($i=0; $i -lt $g_Config.Iterations; $i++) {
                 test_recv -Conn $Conn -Port ($g_Config.StartPort+$i) -Proto $protoParam -OutDir $ProtoOutDir -Fname "$Proto.recv.m$Conn.l$BufferLen.iter$i" -RecvDir $ProtoRecvDir -BufferLen $BufferLen 
                 test_send -Conn $Conn -Port ($g_Config.StartPort+$i) -Proto $protoParam -OutDir $ProtoOutDir -Fname "$Proto.send.m$Conn.l$BufferLen.iter$i" -SendDir $ProtoSendDir -BufferLen $BufferLen
             }        
@@ -116,13 +113,11 @@ function test_ntttcp {
         [parameter(Mandatory=$true)]  [string] $SendDir,
         [parameter(Mandatory=$true)]  [string] $RecvDir
     )
-    if ($null -ne $g_Config.tcp)
-    {
+    if ($null -ne $g_Config.tcp) {
         test_protocol -OutDir $OutDir -SendDir $SendDir -RecvDir $RecvDir -Proto "tcp" 
     }
 
-    if ($null -ne $g_Config.udp)
-    {
+    if ($null -ne $g_Config.udp) {
         test_protocol -OutDir $OutDir -SendDir $SendDir -RecvDir $RecvDir -Proto "udp" 
     }
 
