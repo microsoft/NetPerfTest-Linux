@@ -2,8 +2,6 @@
 # Script Input Parameters Enforcement
 #===============================================
 Param(
-    [parameter(Mandatory=$false)] [switch] $Detail = $false,
-    [parameter(Mandatory=$false)] [switch] $Diag   = $false,
     [parameter(Mandatory=$false)] [string] $Config = "Default",
     [parameter(Mandatory=$true)]  [string] $DestIp,
     [parameter(Mandatory=$true)]  [string] $SrcIp,

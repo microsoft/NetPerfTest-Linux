@@ -73,7 +73,6 @@ function test_operations {
     Param(
         [parameter(Mandatory=$true)] [String] $OutDir,
         [parameter(Mandatory=$true)]  [string] $SendDir,
-        [parameter(Mandatory=$true)]  [string] $RecvDir,
         [parameter(Mandatory=$true)]  [string] $Fname,
         [parameter(Mandatory=$true)]  [string] $Oper
     )
@@ -97,13 +96,13 @@ function test_lagscope_generate {
     # - Measures over input samples
     if ($g_Config.PingIterations -gt 0) {
         banner -Msg "Iteration Tests: [tcp] operations per bounded iterations"
-        test_operations -Oper "-n$($g_Config.PingIterations)" -OutDir $OutDir -Fname "tcp.i$($g_Config.PingIterations)" -SendDir $SendDir -RecvDir
+        test_operations -Oper "-n$($g_Config.PingIterations)" -OutDir $OutDir -Fname "tcp.i$($g_Config.PingIterations)" -SendDir $SendDir
     }
     # Transactions per 10s
     # - Measures operations per bounded time.
     if ($g_Config.Time -gt 0) {
         banner -Msg "Time Tests: [tcp] operations per bounded time"
-        test_operations -Oper "-t$($g_Config.Time)" -OutDir $OutDir -Fname "tcp.t$($g_Config.Time)" -SendDir $SendDir -RecvDir $RecvDir
+        test_operations -Oper "-t$($g_Config.Time)" -OutDir $OutDir -Fname "tcp.t$($g_Config.Time)" -SendDir $SendDir
     }
 } # test_lagscope_generate()
 
