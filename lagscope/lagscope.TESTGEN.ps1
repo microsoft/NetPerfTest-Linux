@@ -2,7 +2,7 @@ Param(
     [parameter(Mandatory=$true)]  [string] $DestIp,
     [parameter(Mandatory=$true)]  [string] $SrcIp,
     [parameter(Mandatory=$true)]  [ValidateScript({Test-Path $_ -PathType Container})] [String] $OutDir = "",
-    [parameter(Mandatory=$false)] [ValidateSet('Azure','Default', 'Detail')] [string] $ConfigName = "Default",
+    [parameter(Mandatory=$false)] [string] $Config = "Default",
     [parameter(Mandatory=$true)]  [string] $DestDir,
     [parameter(Mandatory=$true)]  [string] $SrcDir
 )
@@ -15,7 +15,7 @@ function input_display {
     Write-Host "$g_path\$scriptName"
     Write-Host " Inputs:"
  
-    Write-Host "  -Config     = $ConfigName"
+    Write-Host "  -Config     = $Config"
     Write-Host "  -DestIp     = $DestIp"
     Write-Host "  -SrcIp      = $SrcIp"
     Write-Host "  -OutDir     = $OutDir"
@@ -115,14 +115,19 @@ function test_main {
         [parameter(Mandatory=$true)]  [string] $DestIp,
         [parameter(Mandatory=$true)]  [string] $SrcIp,
         [parameter(Mandatory=$true)]  [ValidateScript({Test-Path $_ -PathType Container})] [String] $OutDir = "",
-        [parameter(Mandatory=$false)] [ValidateSet('Azure','Default', 'Detail')] [string] $ConfigName = "Default",
+        [parameter(Mandatory=$false)] [string] $Config = "Default",
         [parameter(Mandatory=$true)]  [string] $DestDir,
         [parameter(Mandatory=$true)]  [string] $SrcDir
 
     )
     input_display
     $allConfig = Get-Content ./lagscope/lagscope.Config.json | ConvertFrom-Json
-    [Object] $g_Config = $allConfig.("Lagscope$ConfigName")
+    # get config variables
+    [Object] $g_Config = $allConfig.("Lagscope$Config")
+    if ($null -eq $g_Config) {
+        Write-Host "This Config does not exist in ./lagscope/lagscope.Config.json. Please provide a valid config"
+        Throw
+    }
     [string] $g_DestIp  = $DestIp.Trim()
     [string] $g_SrcIp   = $SrcIp.Trim()
     [string] $dir       = (Join-Path -Path $OutDir -ChildPath "lagscope")  

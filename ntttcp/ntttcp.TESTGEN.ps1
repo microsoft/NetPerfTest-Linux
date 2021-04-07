@@ -5,7 +5,7 @@ Param(
     [parameter(Mandatory=$true)]  [string] $DestIp,
     [parameter(Mandatory=$true)]  [string] $SrcIp,
     [parameter(Mandatory=$true)]  [ValidateScript({Test-Path $_ -PathType Container})] [String] $OutDir = "",
-    [parameter(Mandatory=$false)] [ValidateSet('Azure','Default', 'Detail')] [string] $ConfigName = "Default",
+    [parameter(Mandatory=$false)] [string] $Config = "Default",
     [parameter(Mandatory=$true)]  [string] $DestDir,
     [parameter(Mandatory=$true)]  [string] $SrcDir
 )
@@ -17,7 +17,7 @@ function input_display {
     Write-Host "============================================"
     Write-Host "$g_path\$scriptName"
     Write-Host " Inputs:"
-    Write-Host "  -Config     = $ConfigName"
+    Write-Host "  -Config     = $Config"
     Write-Host "  -DestIp     = $DestIp"
     Write-Host "  -SrcIp      = $SrcIp"
     Write-Host "  -OutDir     = $OutDir"
@@ -84,7 +84,9 @@ function test_protocol {
     $ProtoRecvDir = (Join-Path -Path $RecvDir -ChildPath "$Proto") 
     New-Item -ItemType directory -Path $ProtoOutDir | Out-Null
     $protoParam = if ($Proto -eq "udp") {"-u"} else {""};
+    # vary on buffer length
     foreach ($BufferLen in $g_Config.($Proto).BufferLen) {
+        # vary on connection
         foreach ($Conn in $g_Config.($Proto).Connections) {
             for ($i=0; $i -lt $g_Config.Iterations; $i++) {
                 test_recv -Conn $Conn -Port ($g_Config.StartPort+$i) -Proto $protoParam -OutDir $ProtoOutDir -Fname "$Proto.recv.m$Conn.l$BufferLen.iter$i" -RecvDir $ProtoRecvDir -BufferLen $BufferLen 
@@ -113,10 +115,11 @@ function test_ntttcp {
         [parameter(Mandatory=$true)]  [string] $SendDir,
         [parameter(Mandatory=$true)]  [string] $RecvDir
     )
+    # tcp tests
     if ($null -ne $g_Config.tcp) {
         test_protocol -OutDir $OutDir -SendDir $SendDir -RecvDir $RecvDir -Proto "tcp" 
     }
-
+    # udp tests
     if ($null -ne $g_Config.udp) {
         test_protocol -OutDir $OutDir -SendDir $SendDir -RecvDir $RecvDir -Proto "udp" 
     }
@@ -131,27 +134,34 @@ function test_main {
         [parameter(Mandatory=$true)]  [string] $DestIp,
         [parameter(Mandatory=$true)]  [string] $SrcIp,
         [parameter(Mandatory=$true)]  [ValidateScript({Test-Path $_ -PathType Container})] [String] $OutDir,
-        [parameter(Mandatory=$false)] [ValidateSet('Azure','Default', 'Detail')] [string] $ConfigName = "Default",
+        [parameter(Mandatory=$false)] [string] $Config = "Default",
         [parameter(Mandatory=$true)]  [string] $DestDir,
         [parameter(Mandatory=$true)]  [string] $SrcDir
     )
     input_display
     $allConfig = Get-Content ./ntttcp/ntttcp.Config.json | ConvertFrom-Json
-    $g_Config = $allConfig.("Ntttcp$ConfigName")
+    # Get config variables
+    [Object] $g_Config = $allConfig.("Ntttcp$Config")
+    if ($null -eq $g_Config) {
+        Write-Host "This Config does not exist in ./ntttcp/ntttcp.Config.json. Please provide a valid config"
+        Throw
+    }
     [string] $g_DestIp     = $DestIp.Trim()
     [string] $g_SrcIp      = $SrcIp.Trim()
     [string] $dir          = (Join-Path -Path $OutDir -ChildPath "ntttcp") 
     [string] $g_log        = "$dir/NTTTCP.Commands.txt"
     [string] $g_logSend    = "$dir/NTTTCP.Commands.Send.txt"
     [string] $g_logRecv    = "$dir/NTTTCP.Commands.Recv.txt"
+    # Directory for sender computer
     [string] $sendDir   = (Join-Path -Path $SrcDir -ChildPath "ntttcp")
+    # Directory for receiver computer
     [string] $recvDir   = (Join-Path -Path $DestDir -ChildPath "ntttcp")
 
     # Edit spaces in path for Invoke-Expression compatibility
     $dir = $dir -replace ' ','` '
     
     New-Item -ItemType directory -Path $dir | Out-Null
-    Write-Host "test_ntttcp -OutDir $dir -ConfigName $g_ConfigName"
+    Write-Host "test_ntttcp -OutDir $dir -SendDir $sendDir -RecvDir $recvDir"
 
-    test_ntttcp -OutDir $dir -Config $g_Config -SendDir $sendDir -RecvDir $recvDir
+    test_ntttcp -OutDir $dir -SendDir $sendDir -RecvDir $recvDir
 } test_main @PSBoundParameters # Entry Point
