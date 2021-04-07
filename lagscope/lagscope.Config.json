@@ -24,5 +24,14 @@
         "Time"     : 60,
         "PingIterations" : 20000,
         "Options"        : ""
+    },
+
+    "LagscopeTest": {
+        "Iterations": 0,
+        "StartPort": 50002,
+        "BufferTcp": [65536],
+        "Time"     : 60,
+        "PingIterations" : 20000,
+        "Options"        : ""
     }
 }

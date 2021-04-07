@@ -57,5 +57,25 @@
         "Time"     : 60,
         "RecvOptions"        : "-e",
         "SendOptions"        : ""
+    },
+
+    "NtttcpTest": {
+        "Iterations": 6,
+        "StartPort": 50002,
+        "tcp" : {
+            "BufferLen": [],
+            "Connections": [],
+            "Options": ""
+        },
+        "udp" : {
+            "BufferLen": [1000, 1400, 1450, 1500],
+            "Connections": [64, 128],
+            "Options": ""
+        },
+        "Warmup"   : 2,
+        "Cooldown" : 2,
+        "Time"     : 60,
+        "RecvOptions"        : "-e",
+        "SendOptions"        : ""
     }
 }
