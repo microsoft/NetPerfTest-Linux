@@ -28,7 +28,7 @@ The TestUserName is the username of the orchestrating machine to determine the l
 The OutDir folder should not contain the home path.
 
 The default configuration for the commands are outlined in Toolname.Config.json.
-If you would like you use a different configuration, pass in the name of the configuration. If you would like to make your own configuration, the name of the configuration must start with the toolname and can be added to the respective json file.
+If you would like you use a different configuration, pass in the name of the configuration. If you would like to make your own configuration, the name of the configuration must start with the toolname and can be added to the respective json file. Refer to Toolname.Config.md for more information on creating json configs.
 
 ```PowerShell 
 ./PERFTEST.PS1 -DestIp "DestinationMachineIP" -SrcIP "SourceMachineIP" -OutDir "Temp/MyDirectoryForTesting" -DestUserName "DestinationUserName" -SrcUserName "SourceUserName" -TestUserName "TestUserName" -Config 'Detail'

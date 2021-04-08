@@ -1,81 +1,77 @@
 {
     "NtttcpDefault": {
-        "Iterations": 5,
-        "StartPort": 50002,
+        "Iterations"  : 5,
+        "StartPort"   : 50002,
         "tcp" : {
-            "BufferLen": [65536],
-            "Connections": [64],
-            "Options": ""
+            "BufferLen"   : [65536],
+            "Connections" : [64],
+            "Options"     : ""
         },
         "udp" : {
-            "BufferLen": [65536],
+            "BufferLen"  : [65536],
             "Connections": [64],
-            "Options": ""
+            "Options"    : ""
         },
-        "Warmup"   : 2,
-        "Cooldown" : 2,
-        "Time"     : 60,
-        "RecvOptions"        : "-e",
-        "SendOptions"        : ""
+        "Warmup"      : 2,
+        "Cooldown"    : 2,
+        "Time"        : 60,
+        "RecvOptions" : "-e",
+        "SendOptions" : ""
     },
 
     "NtttcpAzure": {
-        "Iterations": 6,
-        "StartPort": 50002,
+        "Iterations"  : 6,
+        "StartPort"   : 50002,
         "tcp" : {
-            "BufferLen": [65536],
-            "Connections": [256],
-            "Options": ""
+            "BufferLen"   : [65536],
+            "Connections" : [256],
+            "Options"     : ""
         },
         "udp" : {
-            "BufferLen": [1450],
-            "Connections": [128],
-            "Options": ""
+            "BufferLen"   : [1450],
+            "Connections" : [128],
+            "Options"     : ""
         },
-        "Warmup"   : 2,
-        "Cooldown" : 2,
-        "Time"     : 60,
-        "RecvOptions"        : "-e",
-        "SendOptions"        : ""
+        "Warmup"      : 2,
+        "Cooldown"    : 2,
+        "Time"        : 60,
+        "RecvOptions" : "-e",
+        "SendOptions" : ""
     },
 
     "NtttcpDetail": {
-        "Iterations": 6,
-        "StartPort": 50002,
+        "Iterations"  : 6,
+        "StartPort"   : 50002,
         "tcp" : {
-            "BufferLen": [65536],
-            "Connections": [1, 2, 4, 8, 16, 32, 64, 128, 256, 512],
-            "Options": ""
+            "BufferLen"   : [65536],
+            "Connections" : [1, 2, 4, 8, 16, 32, 64, 128, 256, 512],
+            "Options"     : ""
         },
         "udp" : {
-            "BufferLen": [1450],
-            "Connections": [1, 2, 4, 8, 16, 32, 64, 128, 256, 512],
-            "Options": ""
+            "BufferLen"   : [1450],
+            "Connections" : [1, 2, 4, 8, 16, 32, 64, 128, 256, 512],
+            "Options"     : ""
         },
-        "Warmup"   : 2,
-        "Cooldown" : 2,
-        "Time"     : 60,
-        "RecvOptions"        : "-e",
-        "SendOptions"        : ""
+        "Warmup"      : 2,
+        "Cooldown"    : 2,
+        "Time"        : 60,
+        "RecvOptions" : "-e",
+        "SendOptions" : ""
     },
 
     "NtttcpTest": {
-        "Iterations": 6,
-        "StartPort": 50002,
-        "tcp" : {
-            "BufferLen": [],
-            "Connections": [],
-            "Options": ""
-        },
+        "Iterations"  : 6,
+        "StartPort"   : 50002,
+        "tcp" : null,
         "udp" : {
-            "BufferLen": [1000, 1400, 1450, 1500],
-            "Connections": [64, 128],
-            "Options": ""
+            "BufferLen"   : [1000, 1400, 1450, 1500],
+            "Connections" : [64, 128],
+            "Options"     : ""
         },
-        "Warmup"   : 2,
-        "Cooldown" : 2,
-        "Time"     : 60,
-        "RecvOptions"        : "-e",
-        "SendOptions"        : ""
+        "Warmup"      : 2,
+        "Cooldown"    : 2,
+        "Time"        : 60,
+        "RecvOptions" : "-e",
+        "SendOptions" : ""
     }
 }
