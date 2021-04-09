@@ -15,7 +15,7 @@
         "Warmup"      : 2,
         "Cooldown"    : 2,
         "Time"        : 60,
-        "RecvOptions" : "-e",
+        "RecvOptions" : "",
         "SendOptions" : ""
     },
 
@@ -35,7 +35,7 @@
         "Warmup"      : 2,
         "Cooldown"    : 2,
         "Time"        : 60,
-        "RecvOptions" : "-e",
+        "RecvOptions" : "",
         "SendOptions" : ""
     },
 
