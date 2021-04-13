@@ -105,7 +105,17 @@ function test_lagscope_generate {
         test_operations -Oper "-t$($g_Config.Time)" -OutDir $OutDir -Fname "tcp.t$($g_Config.Time)" -SendDir $SendDir
     }
 } # test_lagscope_generate()
-
+function validate_config {
+    $isValid = $true
+    $int_vars = @('Iterations', 'StartPort', 'Time', 'PingIterations')
+    foreach ($var in $int_vars) {
+        if (($null -eq $g_Config.($var)) -or ($g_Config.($var) -lt 0)) {
+            Write-Host "$var is required and must be greater than or equal to 0"
+            $isValid = $false
+        }
+    }
+    return $isValid
+} # validate_config()
 #===============================================
 # External Functions - Main Program
 #===============================================
@@ -124,7 +134,11 @@ function test_main {
     # get config variables
     [Object] $g_Config = $allConfig.("Lagscope$Config")
     if ($null -eq $g_Config) {
-        Write-Host "This Config does not exist in ./lagscope/lagscope.Config.json. Please provide a valid config"
+        Write-Host "Lagscope$Config does not exist in ./lagscope/lagscope.Config.json. Please provide a valid config"
+        Throw
+    }
+    if (-Not (validate_config)) {
+        Write-Host "Lagscope$Config is not a valid config"
         Throw
     }
     [string] $g_DestIp  = $DestIp.Trim()
