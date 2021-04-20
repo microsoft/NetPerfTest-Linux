@@ -8,7 +8,7 @@
             "Options"     : ""
         },
         "udp" : {
-            "BufferLen"  : [65536],
+            "BufferLen"  : [1472],
             "Connections": [1, 64],
             "Options"    : ""
         },
@@ -28,7 +28,7 @@
             "Options"     : ""
         },
         "udp" : {
-            "BufferLen"   : [1450],
+            "BufferLen"   : [1472],
             "Connections" : [1, 64, 128],
             "Options"     : ""
         },
@@ -48,7 +48,7 @@
             "Options"     : ""
         },
         "udp" : {
-            "BufferLen"   : [1450],
+            "BufferLen"   : [1472],
             "Connections" : [1, 2, 4, 8, 16, 32, 64, 128, 256, 512],
             "Options"     : ""
         },
