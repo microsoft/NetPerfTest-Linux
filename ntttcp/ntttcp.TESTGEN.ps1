@@ -40,7 +40,7 @@ function test_recv {
     )
 
     [string] $out = (Join-Path -Path $RecvDir -ChildPath "$Fname")
-    [string] $cmd = "./ntttcp -r -m  `"$Conn,*,$g_DestIp`" $Proto -V -b $BufferLen -W $($g_Config.Warmup) -C $($g_Config.Cooldown) -p $Port -t $($g_Config.Time) $($g_Config.RecvOptions) -x $out.xml > $out.txt"
+    [string] $cmd = "./ntttcp -r -m  `"$Conn,*,$g_DestIp`" $Proto -V -b $BufferLen -W $($g_Config.Warmup) -C $($g_Config.Cooldown) -p $Port -t $($g_Config.Runtime) $($g_Config.RecvOptions) -x $out.xml > $out.txt"
     [string] $cmdOut = (Join-Path -Path $OutDir -ChildPath "$Fname")
     Write-Output $cmd | Out-File -Encoding ascii -Append "$cmdOut.txt"
     Write-Output $cmd | Out-File -Encoding ascii -Append $g_log
@@ -62,7 +62,7 @@ function test_send {
     )
 
     [string] $out = (Join-Path -Path $SendDir -ChildPath "$Fname")
-    [string] $cmd = "./ntttcp -s -m `"$Conn,*,$g_DestIp`" $Proto -V -b $BufferLen -W $($g_Config.Warmup) -C $($g_Config.Cooldown) -p $Port -t $($g_Config.Time) $($g_Config.SendOptions) -x $out.xml > $out.txt"
+    [string] $cmd = "./ntttcp -s -m `"$Conn,*,$g_DestIp`" $Proto -V -b $BufferLen -W $($g_Config.Warmup) -C $($g_Config.Cooldown) -p $Port -t $($g_Config.Runtime) $($g_Config.SendOptions) -x $out.xml > $out.txt"
     [string] $cmdOut = (Join-Path -Path $OutDir -ChildPath "$Fname")
     Write-Output $cmd | Out-File -Encoding ascii -Append "$cmdOut.txt"
     Write-Output $cmd | Out-File -Encoding ascii -Append $g_log
@@ -129,7 +129,7 @@ function test_ntttcp {
 
 function validate_config {
     $isValid = $true
-    $int_vars = @('Iterations', 'StartPort', 'Warmup', 'Cooldown', 'Time')
+    $int_vars = @('Iterations', 'StartPort', 'Warmup', 'Cooldown', 'Runtime')
     foreach ($var in $int_vars) {
         if (($null -eq $g_Config.($var)) -or ($g_Config.($var) -lt 0)) {
             Write-Host "$var is required and must be greater than or equal to 0"
@@ -169,34 +169,38 @@ function test_main {
         [parameter(Mandatory=$true)]  [string] $DestDir,
         [parameter(Mandatory=$true)]  [string] $SrcDir
     )
-    input_display
-    $allConfig = Get-Content ./ntttcp/ntttcp.Config.json | ConvertFrom-Json
-    # Get config variables
-    [Object] $g_Config = $allConfig.("Ntttcp$Config")
-    if ($null -eq $g_Config) {
-        Write-Host "Ntttcp$Config does not exist in ./ntttcp/ntttcp.Config.json. Please provide a valid config"
-        Throw
-    }
-    if (-Not (validate_config)) {
-        Write-Host "Ntttcp$Config is not a valid config"
-        Throw
-    }
-    [string] $g_DestIp     = $DestIp.Trim()
-    [string] $g_SrcIp      = $SrcIp.Trim()
-    [string] $dir          = (Join-Path -Path $OutDir -ChildPath "ntttcp") 
-    [string] $g_log        = "$dir/NTTTCP.Commands.txt"
-    [string] $g_logSend    = "$dir/NTTTCP.Commands.Send.txt"
-    [string] $g_logRecv    = "$dir/NTTTCP.Commands.Recv.txt"
-    # Directory for sender computer
-    [string] $sendDir   = (Join-Path -Path $SrcDir -ChildPath "ntttcp")
-    # Directory for receiver computer
-    [string] $recvDir   = (Join-Path -Path $DestDir -ChildPath "ntttcp")
+    try {
+        input_display
+        $allConfig = Get-Content -Path "$PSScriptRoot/ntttcp.Config.json" | ConvertFrom-Json
+        # Get config variables
+        [Object] $g_Config = $allConfig.("Ntttcp$Config")
+        if ($null -eq $g_Config) {
+            Write-Host "Ntttcp$Config does not exist in ./ntttcp/ntttcp.Config.json. Please provide a valid config"
+            Throw
+        }
+        if (-Not (validate_config)) {
+            Write-Host "Ntttcp$Config is not a valid config"
+            Throw
+        }
+        [string] $g_DestIp     = $DestIp.Trim()
+        [string] $g_SrcIp      = $SrcIp.Trim()
+        [string] $dir          = (Join-Path -Path $OutDir -ChildPath "ntttcp") 
+        [string] $g_log        = "$dir/NTTTCP.Commands.txt"
+        [string] $g_logSend    = "$dir/NTTTCP.Commands.Send.txt"
+        [string] $g_logRecv    = "$dir/NTTTCP.Commands.Recv.txt"
+        # Directory for sender computer
+        [string] $sendDir   = (Join-Path -Path $SrcDir -ChildPath "ntttcp")
+        # Directory for receiver computer
+        [string] $recvDir   = (Join-Path -Path $DestDir -ChildPath "ntttcp")
 
-    # Edit spaces in path for Invoke-Expression compatibility
-    $dir = $dir -replace ' ','` '
-    
-    New-Item -ItemType directory -Path $dir | Out-Null
-    Write-Host "test_ntttcp -OutDir $dir -SendDir $sendDir -RecvDir $recvDir"
+        # Edit spaces in path for Invoke-Expression compatibility
+        $dir = $dir -replace ' ','` '
+        
+        New-Item -ItemType directory -Path $dir | Out-Null
+        Write-Host "test_ntttcp -OutDir $dir -SendDir $sendDir -RecvDir $recvDir"
 
-    test_ntttcp -OutDir $dir -SendDir $sendDir -RecvDir $recvDir
+        test_ntttcp -OutDir $dir -SendDir $sendDir -RecvDir $recvDir
+    } catch {
+        Write-Host "Unable to generate NTTTCP commands"
+    }
 } test_main @PSBoundParameters # Entry Point

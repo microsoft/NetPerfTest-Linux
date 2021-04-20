@@ -129,28 +129,32 @@ function test_main {
         [parameter(Mandatory=$true)]  [string] $SrcDir
 
     )
-    input_display
-    $allConfig = Get-Content ./lagscope/lagscope.Config.json | ConvertFrom-Json
-    # get config variables
-    [Object] $g_Config = $allConfig.("Lagscope$Config")
-    if ($null -eq $g_Config) {
-        Write-Host "Lagscope$Config does not exist in ./lagscope/lagscope.Config.json. Please provide a valid config"
-        Throw
-    }
-    if (-Not (validate_config)) {
-        Write-Host "Lagscope$Config is not a valid config"
-        Throw
-    }
-    [string] $g_DestIp  = $DestIp.Trim()
-    [string] $g_SrcIp   = $SrcIp.Trim()
-    [string] $dir       = (Join-Path -Path $OutDir -ChildPath "lagscope")  
-    [string] $g_log     = "$dir/LAGSCOPE.Commands.txt"
-    [string] $g_logSend = "$dir/LAGSCOPE.Commands.Send.txt"
-    [string] $g_logRecv = "$dir/LAGSCOPE.Commands.Recv.txt" 
-    [string] $sendDir   = (Join-Path -Path $SrcDir -ChildPath "lagscope")
-    [string] $recvDir   = (Join-Path -Path $DestDir -ChildPath "lagscope")
+    try {
+        input_display
+        $allConfig = Get-Content -Path "$PSScriptRoot/lagscope.Config.json" | ConvertFrom-Json
+        # get config variables
+        [Object] $g_Config = $allConfig.("Lagscope$Config")
+        if ($null -eq $g_Config) {
+            Write-Host "Lagscope$Config does not exist in ./lagscope/lagscope.Config.json. Please provide a valid config"
+            Throw
+        }
+        if (-Not (validate_config)) {
+            Write-Host "Lagscope$Config is not a valid config"
+            Throw
+        }
+        [string] $g_DestIp  = $DestIp.Trim()
+        [string] $g_SrcIp   = $SrcIp.Trim()
+        [string] $dir       = (Join-Path -Path $OutDir -ChildPath "lagscope")  
+        [string] $g_log     = "$dir/LAGSCOPE.Commands.txt"
+        [string] $g_logSend = "$dir/LAGSCOPE.Commands.Send.txt"
+        [string] $g_logRecv = "$dir/LAGSCOPE.Commands.Recv.txt" 
+        [string] $sendDir   = (Join-Path -Path $SrcDir -ChildPath "lagscope")
+        [string] $recvDir   = (Join-Path -Path $DestDir -ChildPath "lagscope")
 
-    New-Item -ItemType directory -Path $dir | Out-Null
+        New-Item -ItemType directory -Path $dir | Out-Null
 
-    test_lagscope_generate -OutDir $dir -SendDir $sendDir -RecvDir $recvDir
+        test_lagscope_generate -OutDir $dir -SendDir $sendDir -RecvDir $recvDir
+    } catch {
+        Write-Host "Unable to generate LAGSCOPE commands"
+    }
 } test_main @PSBoundParameters # Entry Point

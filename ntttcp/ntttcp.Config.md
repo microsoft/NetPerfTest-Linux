@@ -16,7 +16,7 @@ Any optional variables will be omitted
     },
     "Warmup"      : **Int: Warm-up time in seconds**,
     "Cooldown"    : **Int: Cooldown time in seconds**,
-    "Time"        : **Int: Time of Test Duration in seconds**,
+    "Runtime"        : **Int: Time of Test Duration in seconds**,
     "RecvOptions" : **String: Additional options for receiver commands**,
     "SendOptions" : **String: Additional options for sender commands**
 }

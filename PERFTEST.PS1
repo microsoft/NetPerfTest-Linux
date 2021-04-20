@@ -125,7 +125,7 @@ function test_main {
     env_create  -OutDir $workDir
 
     # lagscope does not have detail 
-    ./lagscope/lagscope.TESTGEN.ps1   -DestIp $g_DestIp -SrcIp $g_SrcIp -OutDir $workDir -DestDir $DestDir -SrcDir $SrcDir -Config $g_config
-    ./ntttcp/ntttcp.TESTGEN.ps1 -DestIp $g_DestIp -SrcIp $g_SrcIp -OutDir $workDir -Config $g_config -DestDir $DestDir -SrcDir $SrcDir
+    & "$PSScriptRoot/lagscope/lagscope.TESTGEN.ps1"   -DestIp $g_DestIp -SrcIp $g_SrcIp -OutDir $workDir -DestDir $DestDir -SrcDir $SrcDir -Config $g_config
+    & "$PSScriptRoot/ntttcp/ntttcp.TESTGEN.ps1" -DestIp $g_DestIp -SrcIp $g_SrcIp -OutDir $workDir -Config $g_config -DestDir $DestDir -SrcDir $SrcDir
 
     } test_main @PSBoundParameters # Entry Point
