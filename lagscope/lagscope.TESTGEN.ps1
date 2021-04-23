@@ -156,5 +156,6 @@ function test_main {
         test_lagscope_generate -OutDir $dir -SendDir $sendDir -RecvDir $recvDir
     } catch {
         Write-Host "Unable to generate LAGSCOPE commands"
+        Write-Host "Exception $($_.Exception.Message) in $($MyInvocation.MyCommand.Name)"
     }
 } test_main @PSBoundParameters # Entry Point
