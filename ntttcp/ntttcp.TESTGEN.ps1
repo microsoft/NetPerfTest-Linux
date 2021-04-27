@@ -175,7 +175,7 @@ function test_main {
         # Get config variables
         [Object] $g_Config = $allConfig.("Ntttcp$Config")
         if ($null -eq $g_Config) {
-            Write-Host "Ntttcp$Config does not exist in ./ntttcp/ntttcp.Config.json. Please provide a valid config"
+            Write-Host "Ntttcp$Config does not exist in $PSScriptRoot/ntttcp.Config.json. Please provide a valid config"
             Throw
         }
         if (-Not (validate_config)) {

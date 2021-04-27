@@ -40,7 +40,7 @@
     },
 
     "NtttcpDetail": {
-        "Iterations"  : 6,
+        "Iterations"  : 3,
         "StartPort"   : 50002,
         "tcp" : {
             "BufferLen"   : [4096, 65536, 262144],
@@ -54,7 +54,7 @@
         },
         "Warmup"      : 2,
         "Cooldown"    : 2,
-        "Runtime"        : 60,
+        "Runtime"        : 10,
         "RecvOptions" : "-e",
         "SendOptions" : ""
     },
