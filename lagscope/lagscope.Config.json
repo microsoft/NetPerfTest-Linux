@@ -1,0 +1,33 @@
+{
+    "LagscopeDefault": {
+        "Iterations"     : 5,
+        "StartPort"      : 50002,
+        "Time"           : 60,
+        "PingIterations" : 10000,
+        "Options"        : ""
+    },
+
+    "LagscopeAzure": {
+        "Iterations"     : 6,
+        "StartPort"      : 50002,
+        "Time"           : 60,
+        "PingIterations" : 20000,
+        "Options"        : ""
+    },
+
+    "LagscopeDetail": {
+        "Iterations"     : 5,
+        "StartPort"      : 50002,
+        "Time"           : 60,
+        "PingIterations" : 20000,
+        "Options"        : ""
+    },
+
+    "LagscopeTest": {
+        "Iterations"     : 0,
+        "StartPort"      : 50002,
+        "Time"           : 60,
+        "PingIterations" : 20000,
+        "Options"        : ""
+    }
+}
