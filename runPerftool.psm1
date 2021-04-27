@@ -144,6 +144,9 @@ $ScriptBlockRemoveBinaries = {
 .PARAMETER SrcIp
     Required Parameter. The IpAddr of the source machine that's going to be sending data for the duration of the throughput tests
 
+.PARAMETER PassAuth
+    Boolean. Set to true if using password authentication to connect to machines
+
 .PARAMETER DestIpUserName
     Required Parameter. Gets domain\username needed to connect to DestIp Machine
 
@@ -151,12 +154,18 @@ $ScriptBlockRemoveBinaries = {
     Required Parameter. Gets password needed to connect to DestIp Machine. 
     Password will be stored as Secure String and chars will not be displayed on the console.
 
+.PARAMETER DestIpKeyPath
+    File path to private rsa key needed to connect to DestIp Machine. Only required if -PassAuth is false.
+
 .PARAMETER SrcIpUserName
     Required Parameter. Gets domain\username needed to connect to SrcIp Machine
 
 .PARAMETER SrcIpPassword
     Required Parameter. Gets password needed to connect to SrcIp Machine. 
     Password will be stored as Secure String and chars will not be displayed on the console
+
+.PARAMETER SrcIpKeyPath
+    File path to private rsa key needed to connect to SrcIp Machine. Only required if -PassAuth is false.
 
 .PARAMETER TestUserName
     Required Parameter. Gets username of current machine to get correct path to commands 
@@ -209,14 +218,19 @@ Function ProcessCommands{
     [Parameter(Mandatory=$True)]  [string]$DestIp,
     [Parameter(Mandatory=$True)] [string]$SrcIp,
     [Parameter(Mandatory=$True)]  [string]$CommandsDir,
+    [Parameter(ParameterSetName='PassAuth', Mandatory=$False)]  [bool]$PassAuth = $False,
     [Parameter(Mandatory=$True, Position=0, HelpMessage="Dest Machine Username?")]
     [string] $DestIpUserName,
     [Parameter(Mandatory=$True, Position=0, HelpMessage="Dest Machine Password?")]
     [SecureString]$DestIpPassword,
+    [Parameter(Mandatory=$False, Position=0, HelpMessage="Dest Machine Key File?")]
+    [String]$DestIpKeyFile = "",
     [Parameter(Mandatory=$True, Position=0, HelpMessage="Src Machine Username?")]
     [string] $SrcIpUserName,
     [Parameter(Mandatory=$True, Position=0, HelpMessage="Src Machine Password?")]
     [SecureString]$SrcIpPassword,
+    [Parameter(Mandatory=$False, Position=0, HelpMessage="Src Machine Key File?")]
+    [String]$SrcIpKeyFile = "",
     [Parameter(Mandatory=$True, Position=0, HelpMessage="Test Machine Username?")]
     [string] $TestUserName,
     [Parameter(Mandatory=$False)] [string]$Bcleanup=$True,
@@ -240,10 +254,10 @@ Function ProcessCommands{
     [PSCredential] $recvIPCreds = New-Object System.Management.Automation.PSCredential($DestIpUserName, $DestIpPassword)
 
     LogWrite "Processing lagscope commands for Linux" $true
-    ProcessToolCommands -Toolname "lagscope" -RecvComputerName $recvComputerName -RecvComputerCreds $recvIPCreds -SendComputerName $sendComputerName -SendComputerCreds $sendIPCreds -TestUserName $TestUserName -CommandsDir $CommandsDir -Bcleanup $Bcleanup -BZip $ZipResults -TimeoutValueBetweenCommandPairs $TimeoutValueInSeconds -PollTimeInSeconds $PollTimeInSeconds -ListeningPort $ListeningPort -FirewallPortMin $FirewallPortMin -FirewallPortMax $FirewallPortMax -RecvDir $recvDir -SendDir $sendDir
+    ProcessToolCommands -PassAuth:$PassAuth -RecvKeyFilePath $DestIpKeyFile -SendKeyFilePath $SrcIpKeyFile -Toolname "lagscope" -RecvComputerName $recvComputerName -RecvComputerCreds $recvIPCreds -SendComputerName $sendComputerName -SendComputerCreds $sendIPCreds -TestUserName $TestUserName -CommandsDir $CommandsDir -Bcleanup $Bcleanup -BZip $ZipResults -TimeoutValueBetweenCommandPairs $TimeoutValueInSeconds -PollTimeInSeconds $PollTimeInSeconds -ListeningPort $ListeningPort -FirewallPortMin $FirewallPortMin -FirewallPortMax $FirewallPortMax -RecvDir $recvDir -SendDir $sendDir
 
     LogWrite "Processing ntttcp commands for Linux" $true
-    ProcessToolCommands -Toolname "ntttcp" -RecvComputerName $recvComputerName -RecvComputerCreds $recvIPCreds -SendComputerName $sendComputerName -SendComputerCreds $sendIPCreds -TestUserName $TestUserName -CommandsDir $CommandsDir -Bcleanup $Bcleanup -BZip $ZipResults -TimeoutValueBetweenCommandPairs $TimeoutValueInSeconds -PollTimeInSeconds $PollTimeInSeconds -ListeningPort $ListeningPort -FirewallPortMin $FirewallPortMin -FirewallPortMax $FirewallPortMax -RecvDir $recvDir -SendDir $sendDir
+    ProcessToolCommands -PassAuth $PassAuth -RecvKeyFilePath $DestIpKeyFile -SendKeyFilePath $SrcIpKeyFile -Toolname "ntttcp" -RecvComputerName $recvComputerName -RecvComputerCreds $recvIPCreds -SendComputerName $sendComputerName -SendComputerCreds $sendIPCreds -TestUserName $TestUserName -CommandsDir $CommandsDir -Bcleanup $Bcleanup -BZip $ZipResults -TimeoutValueBetweenCommandPairs $TimeoutValueInSeconds -PollTimeInSeconds $PollTimeInSeconds -ListeningPort $ListeningPort -FirewallPortMin $FirewallPortMin -FirewallPortMax $FirewallPortMax -RecvDir $recvDir -SendDir $sendDir
 
     LogWrite "ProcessCommands Done!" $true
     Move-Item -Force -Path $Logfile -Destination "$CommandsDir" -ErrorAction Ignore
@@ -265,6 +279,9 @@ Function ProcessCommands{
 .PARAMETER SendComputerName
     The IpAddr of the sender machine that's going to send data for the duration of the throughput tests
 
+.PARAMETER PassAuth
+    Boolean. Set to true if using password authentication to connect to machines
+
 .PARAMETER TestUserName
     Required Parameter. Gets username of current machine to get correct path to commands 
 
@@ -284,6 +301,12 @@ Function ProcessCommands{
 
 .PARAMETER RecvComputerCreds
     Optional PSCredentials to connect to the Receiver machine
+
+.PARAMETER SendKeyFilePath
+    File path to private rsa key needed to connect to Send Machine. Only required if -PassAuth is false.
+
+.PARAMETER RecvKeyFilePath
+    File path to private rsa key needed to connect to Recv Machine. Only required if -PassAuth is false.
 
 .PARAMETER BZip
     Required parameter. The function creates folders and subfolders on remote machines to house the result files of the individual commands. BZip param decides 
@@ -315,11 +338,14 @@ Function ProcessToolCommands{
     param(
         [Parameter(Mandatory=$True)] [string]$RecvComputerName,
         [Parameter(Mandatory=$True)] [string]$SendComputerName,
+        [Parameter(Mandatory=$False)] [bool]$PassAuth = $False,
         [Parameter(Mandatory=$True)] [string]$CommandsDir,
         [Parameter(Mandatory=$True)] [string]$Bcleanup, 
         [Parameter(Mandatory=$False)] [string]$Toolname = "ntttcp", 
         [Parameter(Mandatory=$False)] [PSCredential] $SendComputerCreds = [System.Management.Automation.PSCredential]::Empty,
         [Parameter(Mandatory=$False)] [PSCredential] $RecvComputerCreds = [System.Management.Automation.PSCredential]::Empty,
+        [Parameter(Mandatory=$False)] [String] $SendKeyFilePath = "",
+        [Parameter(Mandatory=$False)] [String] $RecvKeyFilePath = "",
         [Parameter(Mandatory=$True)] [string] $TestUserName,
         [Parameter(Mandatory=$True)] [bool]$BZip,
         [Parameter(Mandatory=$False)] [int] $TimeoutValueBetweenCommandPairs = 60,
@@ -332,44 +358,50 @@ Function ProcessToolCommands{
         )
         [bool] $gracefulCleanup = $False
         # delay to let credential (public key) propagate before remoting
-        $credPropagationTimeInSecond = 2
+        $credPropagationTimeInSecond = 3
     
         [System.IO.TextReader] $recvCommands = $null
         [System.IO.TextReader] $sendCommands = $null
     
         $toolpath = "./{0}" -f $Toolname
-    
         $homePath = "/home/$TestUserName"
-        $keyFilePath = "$homePath/.ssh/netperf_rsa"
-        $pubKeyFilePath = "$homePath/.ssh/netperf_rsa.pub"
 
         LogWrite "Adding receiver and sender computer to known hosts"
         # add receiver and sender computer to known host of current computer
+        if ((Test-Path "$homePath/.ssh") -eq $False) {
+            New-Item -Path "$homePath/.ssh" -ItemType Directory
+        }
         ssh-keyscan -H -p $ListeningPort $RecvComputerName >> "$homePath/.ssh/known_hosts"
         ssh-keyscan -H -p $ListeningPort $SendComputerName >> "$homePath/.ssh/known_hosts"
-        $sshCommandFilePath =  "$CommandsDir/sshCommand.txt"
-        if ((Test-Path $keyFilePath) -eq $False) {
-            LogWrite "Creating RSA public/private key pair"
-            # generate public and private key for ssh specific for NetPerfTest
-            if ((Test-Path "$homePath/.ssh") -eq $False) {
-                New-Item -Path "$homePath/.ssh" -ItemType Directory
-            }
-            Write-Output $keyFilePath | ssh-keygen --% -q -t rsa -N ""
-            chmod 600 $keyFilePath
-        }
-        # create command to copy public key to receiver and sender computer
-        if ((Test-Path $sshCommandFilePath) -eq $True) {
-            Remove-Item -Path $sshCommandFilePath -ErrorAction SilentlyContinue -Force
-        }
-        Add-Content -Path $sshCommandFilePath -Value ("umask 077; test -d .ssh || mkdir .ssh ; echo `"" + (Get-Content $pubKeyFilePath) + "`" >> .ssh/authorized_keys")
-        Start-Sleep -Seconds 60
-        chmod 777 $sshCommandFilePath 
         try {
-            # Establish the Remote PS session with Receiver
-            Write-Output "n" | plink -P $ListeningPort $RecvComputerName -l $RecvComputerCreds.GetNetworkCredential().UserName -pw $RecvComputerCreds.GetNetworkCredential().Password -m $sshCommandFilePath | Out-Null
-            # sleep for credentials to propagate 
-            start-sleep -seconds $credPropagationTimeInSecond
-            $recvPSSession = New-PSSession -Port $ListeningPort -HostName $RecvComputerName -UserName ($RecvComputerCreds.GetNetworkCredential().UserName) -KeyFilePath $keyFilePath
+            if ($PassAuth) {
+                $keyFilePath = "$homePath/.ssh/netperf_rsa"
+                $pubKeyFilePath = "$homePath/.ssh/netperf_rsa.pub"
+
+                $sshCommandFilePath =  "$CommandsDir/sshCommand.txt"
+                if ((Test-Path $keyFilePath) -eq $False) {
+                    LogWrite "Creating RSA public/private key pair"
+                    # generate public and private key for ssh specific for NetPerfTest
+                    Write-Output $keyFilePath | ssh-keygen --% -q -t rsa -N ""
+                    chmod 600 $keyFilePath
+                }
+                # create command to copy public key to receiver and sender computer
+                if ((Test-Path $sshCommandFilePath) -eq $True) {
+                    Remove-Item -Path $sshCommandFilePath -ErrorAction SilentlyContinue -Force
+                }
+                Add-Content -Path $sshCommandFilePath -Value ("umask 077; test -d .ssh || mkdir .ssh ; echo `"" + (Get-Content $pubKeyFilePath) + "`" >> .ssh/authorized_keys")
+                Start-Sleep -Seconds 60
+                chmod 777 $sshCommandFilePath 
+
+                # copy key over to send and recv machine
+                Write-Output "n" | plink -P $ListeningPort $RecvComputerName -l $RecvComputerCreds.GetNetworkCredential().UserName -pw $RecvComputerCreds.GetNetworkCredential().Password -m $sshCommandFilePath | Out-Null
+                Write-Output "n" | plink -P $ListeningPort $SendComputerName -l $SendComputerCreds.GetNetworkCredential().UserName -pw $SendComputerCreds.GetNetworkCredential().Password $sshCommandFilePath | Out-Null
+                # sleep for credentials to propagate 
+                start-sleep -seconds $credPropagationTimeInSecond
+                $SendKeyFilePath = $keyFilePath
+                $RecvKeyFilePath = $keyFilePath
+            }
+            $recvPSSession = New-PSSession -Port $ListeningPort -HostName $RecvComputerName -UserName ($RecvComputerCreds.GetNetworkCredential().UserName) -KeyFilePath $RecvKeyFilePath
     
             if($null -eq $recvPSsession) {
                 LogWrite "Error connecting to Host: $($RecvComputerName)"
@@ -377,10 +409,7 @@ Function ProcessToolCommands{
             }
     
             # Establish the Remote PS session with Sender
-            Write-Output "n" | plink -P $ListeningPort $SendComputerName -l $SendComputerCreds.GetNetworkCredential().UserName -pw $SendComputerCreds.GetNetworkCredential().Password $sshCommandFilePath | Out-Null
-            # sleep for credentials to propagate 
-            start-sleep -seconds $credPropagationTimeInSecond
-            $sendPSSession = New-PSSession -Port $ListeningPort -HostName $SendComputerName -UserName $SendComputerCreds.GetNetworkCredential().UserName -KeyFilePath $keyFilePath
+            $sendPSSession = New-PSSession -Port $ListeningPort -HostName $SendComputerName -UserName $SendComputerCreds.GetNetworkCredential().UserName -KeyFilePath $SendKeyFilePath
         
             if($null -eq $sendPSsession) {
                 LogWrite "Error connecting to Host: $($SendComputerName)"
@@ -585,14 +614,16 @@ Function ProcessToolCommands{
             Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockCleanupFirewallRules -ArgumentList ("50000:50512/udp", $SendComputerCreds)
             
             LogWrite "Cleaning up public private key and known hosts that were created as part of script run"
-            # Delete authorized host from receiver and sender computer
-            Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockRemoveAuthorizedHost 
-            Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockRemoveAuthorizedHost 
+            if ($PassAuth) {
+                # Delete authorized host from receiver and sender computer
+                Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockRemoveAuthorizedHost 
+                Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockRemoveAuthorizedHost 
 
-            # delete public and private key
-            Remove-Item -Path $keyFilePath -ErrorAction SilentlyContinue -Force
-            Remove-Item -Path $pubKeyFilePath -ErrorAction SilentlyContinue -Force
-            Remove-Item -Path $sshCommandFilePath -ErrorAction SilentlyContinue -Force
+                # delete public and private key
+                Remove-Item -Path $keyFilePath -ErrorAction SilentlyContinue -Force
+                Remove-Item -Path $pubKeyFilePath -ErrorAction SilentlyContinue -Force
+                Remove-Item -Path $sshCommandFilePath -ErrorAction SilentlyContinue -Force
+            }
 
             # remove receiver and sender computer as known hosts
             head -n -6 "$homePath/.ssh/known_hosts" | Out-Null
