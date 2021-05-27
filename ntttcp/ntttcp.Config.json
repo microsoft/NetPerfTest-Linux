@@ -14,7 +14,7 @@
         },
         "Warmup"      : 2,
         "Cooldown"    : 2,
-        "Runtime"        : 60,
+        "Runtime"     : 60,
         "RecvOptions" : "",
         "SendOptions" : ""
     },
@@ -28,13 +28,13 @@
             "Options"     : ""
         },
         "udp" : {
-            "BufferLen"   : [1472],
+            "BufferLen"   : [1372, 1472],
             "Connections" : [1, 64, 128],
             "Options"     : ""
         },
         "Warmup"      : 2,
         "Cooldown"    : 2,
-        "Runtime"        : 60,
+        "Runtime"     : 60,
         "RecvOptions" : "",
         "SendOptions" : ""
     },
@@ -54,7 +54,7 @@
         },
         "Warmup"      : 2,
         "Cooldown"    : 2,
-        "Runtime"        : 10,
+        "Runtime"     : 10,
         "RecvOptions" : "-e",
         "SendOptions" : ""
     },
