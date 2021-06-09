@@ -60,11 +60,11 @@
     },
 
     "NtttcpTcp": {
-        "Iterations"  : 3,
+        "Iterations"  : 6,
         "StartPort"   : 50002,
         "tcp" : {
-            "BufferLen"   : [4096, 65536, 262144],
-            "Connections" : [32, 60, 62, 63, 64, 65, 66, 70, 128],
+            "BufferLen"   : [65536],
+            "Connections" : [63, 64, 65, 128, 256],
             "Options"     : ""
         },
         "udp" : null,
