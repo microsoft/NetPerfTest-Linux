@@ -64,7 +64,7 @@
         "StartPort"   : 50002,
         "tcp" : {
             "BufferLen"   : [65536],
-            "Connections" : [63, 64, 65, 128, 256],
+            "Connections" : [62, 63, 64, 65, 66, 128, 256],
             "Options"     : ""
         },
         "udp" : null,
