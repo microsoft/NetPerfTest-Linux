@@ -68,9 +68,9 @@
             "Options"     : ""
         },
         "udp" : null,
-        "Warmup"      : 2,
-        "Cooldown"    : 2,
-        "Runtime"        : 60,
+        "Warmup"      : 10,
+        "Cooldown"    : 10,
+        "Runtime"        : 90,
         "RecvOptions" : "-e",
         "SendOptions" : ""
     }
