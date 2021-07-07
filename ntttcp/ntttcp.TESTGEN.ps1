@@ -89,7 +89,7 @@ function test_protocol {
         # vary on connection
         foreach ($Conn in $g_Config.($Proto).Connections) {
             for ($i=0; $i -lt $g_Config.Iterations; $i++) {
-                [int] $portstart = $g_Config.StartPort + ($i * $g_Config.Iterations)
+                [int] $portstart = ($g_Config.StartPort+$i)
                 test_recv -Conn $Conn -Port $portstart -Proto $protoParam -OutDir $ProtoOutDir -Fname "$Proto.recv.m$Conn.l$BufferLen.iter$i" -RecvDir $ProtoRecvDir -BufferLen $BufferLen 
                 test_send -Conn $Conn -Port $portstart -Proto $protoParam -OutDir $ProtoOutDir -Fname "$Proto.send.m$Conn.l$BufferLen.iter$i" -SendDir $ProtoSendDir -BufferLen $BufferLen
             }        
