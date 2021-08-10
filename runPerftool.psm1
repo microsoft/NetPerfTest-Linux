@@ -472,9 +472,8 @@ Function ProcessToolCommands{
                 LogWrite "Invoking Cmd - Machine: $recvComputerName Command: $recvCmd" 
                 $recvJob = Invoke-Command -Session $recvPSSession -ScriptBlock ([Scriptblock]::Create($recvCmd)) -AsJob 
                 
-                if ($Toolname -eq "ntttcp") {
-                    Start-Sleep -Seconds $PollTimeInSeconds
-                }
+                Start-Sleep -Seconds $PollTimeInSeconds
+                
                 # Work here to invoke send commands
                 # Since we want the files to get generated under a subfolder, we replace the path to include the subfolder
                 $sendCmd =  $sendCmd -ireplace [regex]::Escape($CommandsDir), "$SendDir/Sender"
