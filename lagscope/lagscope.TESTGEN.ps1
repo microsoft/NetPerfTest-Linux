@@ -1,9 +1,8 @@
 Param(
-    [parameter(Mandatory=$false)] [Int]    $Iterations = 1,
     [parameter(Mandatory=$true)]  [string] $DestIp,
     [parameter(Mandatory=$true)]  [string] $SrcIp,
     [parameter(Mandatory=$true)]  [ValidateScript({Test-Path $_ -PathType Container})] [String] $OutDir = "",
-    [parameter(Mandatory=$false)] [ValidateSet('Sampling','Testing')] [string] $Config = "Sampling",
+    [parameter(Mandatory=$false)] [string] $Config = "Default",
     [parameter(Mandatory=$true)]  [string] $DestDir,
     [parameter(Mandatory=$true)]  [string] $SrcDir
 )
@@ -16,7 +15,7 @@ function input_display {
     Write-Host "$g_path\$scriptName"
     Write-Host " Inputs:"
  
-    Write-Host "  -Iterations = $Iterations"
+    Write-Host "  -Config     = $Config"
     Write-Host "  -DestIp     = $DestIp"
     Write-Host "  -SrcIp      = $SrcIp"
     Write-Host "  -OutDir     = $OutDir"
@@ -40,10 +39,9 @@ function banner {
 function test_recv {
     [CmdletBinding()]
     Param(
-        [parameter(Mandatory=$true)]   [int]    $Port,
-        [parameter(Mandatory=$true)]   [String] $RecvDir
+        [parameter(Mandatory=$true)]   [int]    $Port
     )
-    [string] $cmd = "./lagscope -r -p$Port"
+    [string] $cmd = "./lagscope -r -p$Port $($g_Config.Options)"
     Write-Output $cmd | Out-File -Encoding ascii -Append $g_log
     Write-Output $cmd | Out-File -Encoding ascii -Append $g_logRecv
     Write-Host   $cmd 
@@ -52,113 +50,112 @@ function test_recv {
 function test_send {
     [CmdletBinding()]
     Param(
-        [parameter(Mandatory=$false)]  [string] $Iter,
-        [parameter(Mandatory=$false)]  [int]    $Secs,
+        [parameter(Mandatory=$true)]  [string] $Oper,
         [parameter(Mandatory=$true)]   [int]    $Port,
-        [parameter(Mandatory=$false)]  [String] $Options,
-        [parameter(Mandatory=$true)]   [String] $OutDir,
         [parameter(Mandatory=$true)]   [String] $Fname,
-        [parameter(Mandatory=$false)]  [bool]   $NoDumpParam = $false,
-        [parameter(Mandatory=$true)]   [String] $SendDir
-
+        [parameter(Mandatory=$true)]   [String] $SendDir,
+        [parameter(Mandatory=$true)]  [string] $OutDir
     )
-
-    #[int] $msgbytes = 4  #lagscope default is 4B, no immediate need to specify.
     [int] $rangeus  = 10
     [int] $rangemax = 98
 
-    [string] $out        = (Join-Path -Path $SendDir -ChildPath "$Fname")
-    [string] $cmd = "./lagscope $Iter -s`"$g_DestIp`" -p$Port -V -H -c$rangemax -l$rangeus -P`"$out.per.json`" -R`"$out.data.csv`" > `"$out.txt`""
+    [string] $out    = (Join-Path -Path $SendDir -ChildPath "$Fname")
+    [string] $cmd    = "./lagscope $Oper -s`"$g_DestIp`" -p$Port -V $($g_Config.Options) -H -c$rangemax -l$rangeus -P`"$out.per.json`" -R`"$out.data.csv`" > `"$out.txt`""
+    [string] $cmdOut = (Join-Path -Path $OutDir -ChildPath "$Fname")
+    Write-Output $cmd | Out-File -Encoding ascii -Append "$cmdOut.txt"
     Write-Output $cmd | Out-File -Encoding ascii -Append $g_log
     Write-Output $cmd | Out-File -Encoding ascii -Append $g_logSend
     Write-Host   $cmd 
 } # test_send()
 
+function test_operations {
+    [CmdletBinding()]
+    Param(
+        [parameter(Mandatory=$true)] [String] $OutDir,
+        [parameter(Mandatory=$true)]  [string] $SendDir,
+        [parameter(Mandatory=$true)]  [string] $Fname,
+        [parameter(Mandatory=$true)]  [string] $Oper
+    )
+
+    for ($i=0; $i -lt $g_Config.Iterations; $i++) {
+        [int] $portstart = $g_Config.StartPort + ($i * $g_Config.Iterations)
+        test_send -Port $portstart -Oper $Oper -SendDir $SendDir -Fname "$Fname.iter$i" -OutDir $OutDir
+        test_recv -Port $portstart
+    }   
+}
+
 function test_lagscope_generate {
     [CmdletBinding()]
     Param(
         [parameter(Mandatory=$true)] [String] $OutDir,
-        [parameter(Mandatory=$false)] [ValidateScript({Test-Path $_})] [String] $ConfigFile,
         [parameter(Mandatory=$true)]  [string] $SendDir,
         [parameter(Mandatory=$true)]  [string] $RecvDir
-
     )
-    if ($ConfigFile -ne $null) {
-        Try
-        {
-            . .\$ConfigFile
-        }
-        Catch
-        {
-            Write-Host "$ConfigFile will not be used. Exception $($_.Exception.Message) in $($MyInvocation.MyCommand.Name)"
-        }
-    }
-    
-    # Normalize output directory
-    $dir = $OutDir
 
     # Iteration Tests capturing each transaction time
     # - Measures over input samples
-    banner -Msg "Iteration Tests: [tcp] operations per bounded iterations"
-    [int] $tmp  = 50001
-    [int] $iter = 20000 
-    for ($i=0; $i -lt $g_iters; $i++) {
-        [int] $portstart = $tmp + ($i * $g_iters)
-
-        test_send -Iter "-n$iter" -Port $portstart -OutDir $dir -Fname "tcp.i$iter.iter$i" -SendDir $SendDir
-        test_recv -Port $portstart -RecvDir $RecvDir
+    if ($g_Config.PingIterations -gt 0) {
+        banner -Msg "Iteration Tests: [tcp] operations per bounded iterations"
+        test_operations -Oper "-n$($g_Config.PingIterations)" -OutDir $OutDir -Fname "tcp.i$($g_Config.PingIterations)" -SendDir $SendDir
     }
-
-    # # Transactions per 10s
-    # # - Measures operations per bounded time.
-    # banner -Msg "Time Tests: [tcp] operations per bounded time"
-    # [int] $tmp = 50001
-    # [int] $sec = 10
-    # for ($i=0; $i -lt $g_iters; $i++) {
-    #     [int] $portstart = $tmp + ($i * $g_iters)
-        
-    #     # Default
-    #     test_send -Iter "-t$sec" -Port $portstart -Options "" -OutDir $dir -Fname "tcp.t$sec.iter$i" -SendDir $SendDir
-    #     test_recv -Port $portstart -RecvDir $RecvDir
-        
-    # }
+    # Transactions per 10s
+    # - Measures operations per bounded time.
+    if ($g_Config.Time -gt 0) {
+        banner -Msg "Time Tests: [tcp] operations per bounded time"
+        test_operations -Oper "-t$($g_Config.Time)" -OutDir $OutDir -Fname "tcp.t$($g_Config.Time)" -SendDir $SendDir
+    }
 } # test_lagscope_generate()
-
+function validate_config {
+    $isValid = $true
+    $int_vars = @('Iterations', 'StartPort', 'Time', 'PingIterations')
+    foreach ($var in $int_vars) {
+        if (($null -eq $g_Config.($var)) -or ($g_Config.($var) -lt 0)) {
+            Write-Host "$var is required and must be greater than or equal to 0"
+            $isValid = $false
+        }
+    }
+    return $isValid
+} # validate_config()
 #===============================================
 # External Functions - Main Program
 #===============================================
 function test_main {
     Param(
-        [parameter(Mandatory=$false)] [Int]    $Iterations = 1,
         [parameter(Mandatory=$true)]  [string] $DestIp,
         [parameter(Mandatory=$true)]  [string] $SrcIp,
         [parameter(Mandatory=$true)]  [ValidateScript({Test-Path $_ -PathType Container})] [String] $OutDir = "",
-        [parameter(Mandatory=$false)] [ValidateSet('Sampling','Testing')] [string] $Config = "Sampling",
+        [parameter(Mandatory=$false)] [string] $Config = "Default",
         [parameter(Mandatory=$true)]  [string] $DestDir,
         [parameter(Mandatory=$true)]  [string] $SrcDir
 
     )
-    input_display
-    
-    [int]    $g_iters   = $Iterations
-    [string] $g_DestIp  = $DestIp.Trim()
-    [string] $g_SrcIp   = $SrcIp.Trim()
-    [string] $dir       = (Join-Path -Path $OutDir -ChildPath "lagscope")  
-    [string] $g_log     = "$dir/LAGSCOPE.Commands.txt"
-    [string] $g_logSend = "$dir/LAGSCOPE.Commands.Send.txt"
-    [string] $g_logRecv = "$dir/LAGSCOPE.Commands.Recv.txt" 
-    [string] $g_ConfigFile = "./lagscope/lagscope.$Config.Config.ps1"
-    [string] $sendDir   = (Join-Path -Path $SrcDir -ChildPath "lagscope")
-    [string] $recvDir   = (Join-Path -Path $DestDir -ChildPath "lagscope")
+    try {
+        input_display
+        $allConfig = Get-Content -Path "$PSScriptRoot/lagscope.Config.json" | ConvertFrom-Json
+        # get config variables
+        [Object] $g_Config = $allConfig.("Lagscope$Config")
+        if ($null -eq $g_Config) {
+            Write-Host "Lagscope$Config does not exist in ./lagscope/lagscope.Config.json. Please provide a valid config"
+            Throw
+        }
+        if (-Not (validate_config)) {
+            Write-Host "Lagscope$Config is not a valid config"
+            Throw
+        }
+        [string] $g_DestIp  = $DestIp.Trim()
+        [string] $g_SrcIp   = $SrcIp.Trim()
+        [string] $dir       = (Join-Path -Path $OutDir -ChildPath "lagscope")  
+        [string] $g_log     = "$dir/LAGSCOPE.Commands.txt"
+        [string] $g_logSend = "$dir/LAGSCOPE.Commands.Send.txt"
+        [string] $g_logRecv = "$dir/LAGSCOPE.Commands.Recv.txt" 
+        [string] $sendDir   = (Join-Path -Path $SrcDir -ChildPath "lagscope")
+        [string] $recvDir   = (Join-Path -Path $DestDir -ChildPath "lagscope")
 
-    New-Item -ItemType directory -Path $dir | Out-Null
-    
-    # Optional - Edit spaces in output path for Invoke-Expression compatibility
-    # $dir  = $dir  -replace ' ','` '
+        New-Item -ItemType directory -Path $dir | Out-Null
 
-    if (Test-Path $g_ConfigFile) {
-        test_lagscope_generate -OutDir $dir -SendDir $sendDir -RecvDir $recvDir -ConfigFile $g_ConfigFile
-    } else {
         test_lagscope_generate -OutDir $dir -SendDir $sendDir -RecvDir $recvDir
+    } catch {
+        Write-Host "Unable to generate LAGSCOPE commands"
+        Write-Host "Exception $($_.Exception.Message) in $($MyInvocation.MyCommand.Name)"
     }
 } test_main @PSBoundParameters # Entry Point
