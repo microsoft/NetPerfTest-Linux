@@ -62,12 +62,12 @@
     "NtttcpTest": {
         "Iterations"  : 6,
         "StartPort"   : 50002,
-        "tcp" : null,
-        "udp" : {
-            "BufferLen"   : [1372, 1390],
-            "Connections" : [64, 128],
+        "tcp" : {
+            "BufferLen"   : [65536],
+            "Connections" : [64],
             "Options"     : ""
         },
+        "udp" : null,
         "Warmup"      : 2,
         "Cooldown"    : 2,
         "Runtime"        : 60,
