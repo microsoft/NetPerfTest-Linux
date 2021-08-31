@@ -27,8 +27,6 @@ Param(
     [switch] $Setup,
     [switch] $Cleanup,
     [Parameter(Mandatory=$False)]  $Port=5985,
-    [Parameter(Mandatory=$True, Position=0, HelpMessage="Machine Password?")]
-    [SecureString]$Password, 
     [Parameter(Mandatory=$False)] [bool] $PassAuth
 )
 
