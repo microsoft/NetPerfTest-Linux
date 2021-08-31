@@ -250,12 +250,12 @@ Function ProcessCommands{
     $CommandsDir = "/home/$TestUserName/$CommandsDir"
     # create password placeholder
     if ($SrcIpPassword -eq $null) {
-        $SrcIpPassword = ConvertTo-SecureString -String '' -AsPlainText -Force
+        $SrcIpPassword = ConvertTo-SecureString -String ' ' -AsPlainText -Force
     }
 
     # create password placeholder
     if ($DestIpPassword -eq $null) {
-        $DestIpPassword = ConvertTo-SecureString -String '' -AsPlainText -Force
+        $DestIpPassword = ConvertTo-SecureString -String ' ' -AsPlainText -Force
     }
 
     [PSCredential] $sendIPCreds = New-Object System.Management.Automation.PSCredential($SrcIpUserName, $SrcIpPassword)
