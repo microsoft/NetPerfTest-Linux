@@ -44,13 +44,13 @@ $ScriptBlockEnableToolPermissions = {
 } # $ScriptBlockEnableToolPermissions()
 
 $ScriptBlockCleanupFirewallRules = {
-    param($port, $creds)
-    Write-Output $creds.GetNetworkCredential().Password | sudo -S ufw delete allow $port | Out-Null
+    param($port)
+    sudo -S ufw delete allow $port | Out-Null
 } # $ScriptBlockCleanupFirewallRules()
 
 $ScriptBlockEnableFirewallRules = {
-    param ($port, $creds)
-    Write-Output $creds.GetNetworkCredential().Password | sudo -S ufw allow $port | Out-Null
+    param ($port)
+    sudo -S ufw allow $port | Out-Null
 } # $ScriptBlockEnableFirewallRules()
 
 $ScriptBlockTaskKill = {
@@ -221,13 +221,13 @@ Function ProcessCommands{
     [Parameter(ParameterSetName='PassAuth', Mandatory=$False)]  [bool]$PassAuth = $False,
     [Parameter(Mandatory=$True, Position=0, HelpMessage="Dest Machine Username?")]
     [string] $DestIpUserName,
-    [Parameter(Mandatory=$True, Position=0, HelpMessage="Dest Machine Password?")]
+    [Parameter(Mandatory=$False, Position=0, HelpMessage="Dest Machine Password?")]
     [SecureString]$DestIpPassword,
     [Parameter(Mandatory=$False, Position=0, HelpMessage="Dest Machine Key File?")]
     [String]$DestIpKeyFile = "",
     [Parameter(Mandatory=$True, Position=0, HelpMessage="Src Machine Username?")]
     [string] $SrcIpUserName,
-    [Parameter(Mandatory=$True, Position=0, HelpMessage="Src Machine Password?")]
+    [Parameter(Mandatory=$False, Position=0, HelpMessage="Src Machine Password?")]
     [SecureString]$SrcIpPassword,
     [Parameter(Mandatory=$False, Position=0, HelpMessage="Src Machine Key File?")]
     [String]$SrcIpKeyFile = "",
@@ -444,10 +444,10 @@ Function ProcessToolCommands{
             Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockEnableToolPermissions -ArgumentList "$SendDir/Sender/$Toolname/$Toolname"
             
             # allow multiple ports in firewall
-            Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockEnableFirewallRules -ArgumentList ("$FirewallPortMin`:$FirewallPortMax/tcp", $RecvComputerCreds)
-            Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockEnableFirewallRules -ArgumentList ("$FirewallPortMin`:$FirewallPortMax/tcp", $SendComputerCreds)
-            Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockEnableFirewallRules -ArgumentList ("$FirewallPortMin`:$FirewallPortMax/udp", $RecvComputerCreds)
-            Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockEnableFirewallRules -ArgumentList ("$FirewallPortMin`:$FirewallPortMax/udp", $SendComputerCreds)
+            Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockEnableFirewallRules -ArgumentList ("$FirewallPortMin`:$FirewallPortMax/tcp")
+            Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockEnableFirewallRules -ArgumentList ("$FirewallPortMin`:$FirewallPortMax/tcp")
+            Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockEnableFirewallRules -ArgumentList ("$FirewallPortMin`:$FirewallPortMax/udp")
+            Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockEnableFirewallRules -ArgumentList ("$FirewallPortMin`:$FirewallPortMax/udp")
             
             # Kill any background processes related to tool in case previous run is still running
             Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockTaskKill -ArgumentList $Toolname
@@ -608,10 +608,10 @@ Function ProcessToolCommands{
     
             LogWrite "Cleaning up the firewall rules that were created as part of script run..."
             # Clean up the firewall rules that this script created
-            Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockCleanupFirewallRules -ArgumentList ("50000:50512/tcp", $RecvComputerCreds)
-            Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockCleanupFirewallRules -ArgumentList ("50000:50512/tcp", $SendComputerCreds)
-            Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockCleanupFirewallRules -ArgumentList ("50000:50512/udp", $RecvComputerCreds)
-            Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockCleanupFirewallRules -ArgumentList ("50000:50512/udp", $SendComputerCreds)
+            Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockCleanupFirewallRules -ArgumentList ("50000:50512/tcp")
+            Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockCleanupFirewallRules -ArgumentList ("50000:50512/tcp")
+            Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockCleanupFirewallRules -ArgumentList ("50000:50512/udp")
+            Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockCleanupFirewallRules -ArgumentList ("50000:50512/udp")
             
             LogWrite "Cleaning up public private key and known hosts that were created as part of script run"
             if ($PassAuth) {

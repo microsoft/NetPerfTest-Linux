@@ -34,7 +34,6 @@ Param(
 
 Function SetupRemoting{
     param(
-        [Parameter(Mandatory=$True)] [PSCredential] $Creds,
         [Parameter(Mandatory=$False)]  $Port=5985, 
         [Parameter(Mandatory=$False)] [bool] $PassAuth
     )
@@ -42,7 +41,7 @@ Function SetupRemoting{
     Write-Host "Installing PSRemoting via SSH on this computer..."
     Write-Host "Editing sshd_config file to allow for public key and password authentication for port $Port"
     # edit sshd_config to listen to port and allow public key and password authentication
-    Write-Output $Creds.GetNetworkCredential().Password | sudo -S sed -i "s/#\?\(PubkeyAuthentication\s*\).*$/\1yes/" /etc/ssh/sshd_config
+    sudo -S sed -i "s/#\?\(PubkeyAuthentication\s*\).*$/\1yes/" /etc/ssh/sshd_config
     if ($PassAuth) 
     {
         sudo sed -i 's/#\?\(PasswordAuthentication\s*\).*$/\1yes/' /etc/ssh/sshd_config
@@ -71,17 +70,16 @@ Function SetupRemoting{
 
 Function CleanupRemoting{
     param(
-        [Parameter(Mandatory=$True)] [PSCredential] $Creds,
         [Parameter(Mandatory=$False)]  $Port=5985
     )
     Write-Host "Disabling PSRemoting via SSH on this computer..."
     Write-Host "Editing sshd_config file to allow for public key and password authentication to default port"
     # edit ssh server to listen to default port of 22
-    Write-Output $Creds.GetNetworkCredential().Password | sudo -S sed -i 's/#\?\(Port\s*\).*$/\122/' /etc/ssh/sshd_config
+    sudo -S sed -i 's/#\?\(Port\s*\).*$/\122/' /etc/ssh/sshd_config
     # restart and stop sshd server 
     sudo service sshd restart | Out-Null 
     Write-Host "Stopping Open-SSH Server service"
-    Write-Output $Creds.GetNetworkCredential().Password | sudo service sshd stop | Out-Null 
+    sudo service sshd stop | Out-Null 
     # delete ssh and port firewall rules
     Write-Host "Deleting firewall rule that allows ssh service from port $Port"
     sudo ufw delete allow $Port/tcp | Out-Null 
@@ -92,11 +90,10 @@ Function CleanupRemoting{
 function main {
     try {
         # create credential blob to store username and password securely 
-        [PSCredential] $creds = New-Object System.Management.Automation.PSCredential("user", $Password)
         if($Setup.IsPresent) {
-            SetupRemoting -Creds $creds -Port $Port -PassAuth $PassAuth
+            SetupRemoting -Port $Port -PassAuth $PassAuth
         } elseif($Cleanup.IsPresent) {
-            CleanupRemoting -Creds $creds -Port $Port
+            CleanupRemoting -Port $Port
         } else {
             Write-Host "Exiting.. as neither the setup nor cleanup flag was passed"
         }
