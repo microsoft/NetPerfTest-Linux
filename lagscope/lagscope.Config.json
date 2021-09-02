@@ -24,7 +24,7 @@
     },
 
     "LagscopeTest": {
-        "Iterations"     : 0,
+        "Iterations"     : 8,
         "StartPort"      : 50002,
         "Time"           : 60,
         "PingIterations" : 20000,
