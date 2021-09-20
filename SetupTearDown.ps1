@@ -60,9 +60,9 @@ Function SetupRemoting{
     sudo service sshd restart | Out-Null 
     Write-Host "Enabling firewall and allowing ssh service from port $Port"
     # enable ssh server and listening port
-    sudo ufw disable | Out-Null 
-    # sudo ufw allow ssh | Out-Null 
-    # sudo ufw allow $Port/tcp | Out-Null 
+    sudo ufw enable | Out-Null 
+    sudo ufw allow ssh | Out-Null 
+    sudo ufw allow $Port/tcp | Out-Null 
 } # SetupRemoting()
 
 
@@ -80,9 +80,8 @@ Function CleanupRemoting{
     sudo service sshd stop | Out-Null 
     # delete ssh and port firewall rules
     Write-Host "Deleting firewall rule that allows ssh service from port $Port"
-    # sudo ufw delete allow $Port/tcp | Out-Null 
-    # sudo ufw delete allow ssh | Out-Null 
-    sudo ufw enable
+    sudo ufw delete allow $Port/tcp | Out-Null 
+    sudo ufw delete allow ssh | Out-Null 
 } # CleanupRemoting()
 
 #Main-function
