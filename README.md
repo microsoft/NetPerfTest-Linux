@@ -40,6 +40,13 @@ Before proceeding to run the commands/tests that were generated above, we must e
 
 If you choose to use password authentication, use the switch -KeyAuth.
 
+On Linux machines, you must start Powershell with sudo to elevate the permissions for 
+the setup and cleanup or else you will be prompted for a password.
+
+```console
+sudo pwsh
+```
+
 To setup the machine(s), run the following command on each machine to test (ej. Destination and Source machine)
 
 ```PowerShell
@@ -49,8 +56,6 @@ SetupTearDown.ps1 -Setup
 ```PowerShell
 SetupTearDown.ps1 -Setup -PassAuth
 ```
-
-You will be prompted for password for the computer you are running the script on to enable to firewall and edit files. It is a Secure-string so your password will not be displayed or stored in clear text at any point.
 
 ## Command Execution and Result Collection
 

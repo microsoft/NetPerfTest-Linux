@@ -44,13 +44,21 @@ $ScriptBlockEnableToolPermissions = {
 } # $ScriptBlockEnableToolPermissions()
 
 $ScriptBlockCleanupFirewallRules = {
-    param($port)
-    sudo -S ufw delete allow $port | Out-Null
+    param($port, $creds)
+    if ([String]::IsNullOrWhiteSpace($creds.GetNetworkCredential().Password)) {
+        sudo ufw delete allow $port | Out-Null
+    } else {
+        Write-Output $creds.GetNetworkCredential().Password | sudo -S ufw delete allow $port | Out-Null
+    }
 } # $ScriptBlockCleanupFirewallRules()
 
 $ScriptBlockEnableFirewallRules = {
-    param ($port)
-    sudo -S ufw allow $port | Out-Null
+    param ($port, $creds)
+    if ([String]::IsNullOrWhiteSpace($creds.GetNetworkCredential().Password)) {
+        sudo ufw allow $port | Out-Null
+    } else {
+        Write-Output $creds.GetNetworkCredential().Password | sudo -S ufw allow $port | Out-Null
+    }
 } # $ScriptBlockEnableFirewallRules()
 
 $ScriptBlockTaskKill = {
@@ -137,73 +145,54 @@ $ScriptBlockRemoveBinaries = {
 <#
 .SYNOPSIS
     This function reads an input file of commands and orchestrates the execution of these commands on remote machines.
-
 .PARAMETER DestIp
     Required Parameter. The IpAddr of the destination machine that's going to receive data for the duration of the throughput tests
-
 .PARAMETER SrcIp
     Required Parameter. The IpAddr of the source machine that's going to be sending data for the duration of the throughput tests
-
 .PARAMETER PassAuth
     Boolean. Set to true if using password authentication to connect to machines
-
 .PARAMETER DestIpUserName
     Required Parameter. Gets domain\username needed to connect to DestIp Machine
-
 .PARAMETER DestIpPassword
     Required Parameter. Gets password needed to connect to DestIp Machine. 
     Password will be stored as Secure String and chars will not be displayed on the console.
-
 .PARAMETER DestIpKeyPath
     File path to private rsa key needed to connect to DestIp Machine. Only required if -PassAuth is false.
-
 .PARAMETER SrcIpUserName
     Required Parameter. Gets domain\username needed to connect to SrcIp Machine
-
 .PARAMETER SrcIpPassword
     Required Parameter. Gets password needed to connect to SrcIp Machine. 
     Password will be stored as Secure String and chars will not be displayed on the console
-
 .PARAMETER SrcIpKeyPath
     File path to private rsa key needed to connect to SrcIp Machine. Only required if -PassAuth is false.
-
 .PARAMETER TestUserName
     Required Parameter. Gets username of current machine to get correct path to commands 
-
 .PARAMETER CommandsDir
     Required Parameter that specifies the location of the folder with the auto generated commands to run.
-
 .PARAMETER BCleanup
     Optional parameter that will clean up the source and destination folders, after the test run, if set to true.
     If false, the folders that were created to store the results will be left untouched on both machines
     Default value: $True
-
 .PARAMETER ZipResults
     Optional parameter that will compress the results folders before copying it over to the machine that's triggering the run.
     If false, the result folders from both Source and Destination machines will be copied over as is.
     Default value: $True
-
 .PARAMETER TimeoutValueInSeconds
     Optional parameter to configure the amount of wait time (in seconds) to allow each command pair to gracefully exit 
     before cleaning up and moving to the next set of commands
     Default value: 90 seconds
-
 .PARAMETER PollTimeInSeconds
     Optional parameter to configure the amount of time the tool waits (in seconds) before waking up to check if the TimeoutValueBetweenCommandPairs period has elapsed
     Default value: 5
-
 .PARAMETER ListeningPort
     Optional port number that the recevier and sender computer SSH server is listening on from Setup script.
     Default value: 5985
-
 .PARAMETER FirewallPortMin
     Optional minimum server port number used for iteration tests to allow firewall to accept pings from
     Default value: 50000
-
 .PARAMETER FirewallPortMax
     Optional maximum server port number used for iteration tests to allow firewall to accept pings from
     Default value: 50512
-
 .DESCRIPTION
     Please run SetupTearDown.ps1 -Setup on the DestIp and SrcIp machines independently to help with PSRemoting setup
     This function is dependent on the output of PERFTEST.PS1 function
@@ -248,6 +237,7 @@ Function ProcessCommands{
     $recvDir = "/home/$DestIpUserName/$CommandsDir"
     $sendDir = "/home/$SrcIpUserName/$CommandsDir"
     $CommandsDir = "/home/$TestUserName/$CommandsDir"
+
     # create password placeholder
     if ($SrcIpPassword -eq $null) {
         $SrcIpPassword = ConvertTo-SecureString -String ' ' -AsPlainText -Force
@@ -281,67 +271,47 @@ Function ProcessCommands{
 <#
 .SYNOPSIS
     This function reads an input file of commands and orchestrates the execution of these commands on remote machines.
-
 .PARAMETER RecvComputerName
     The IpAddr of the destination machine that's going to play the Receiver role and wait to receive data for the duration of the throughput tests
-
 .PARAMETER SendComputerName
     The IpAddr of the sender machine that's going to send data for the duration of the throughput tests
-
 .PARAMETER PassAuth
     Boolean. Set to true if using password authentication to connect to machines
-
 .PARAMETER TestUserName
     Required Parameter. Gets username of current machine to get correct path to commands 
-
 .PARAMETER CommandsDir
     The location of the folder that's going to have the auto generated commands for the tool.
-
 .PARAMETER Toolname
     Default value: ntttcp. The function parses the Send and Recv files for the tool specified here
     and reads the commands and executes them on the SrcIp and DestIp machines
-
 .PARAMETER bCleanup
     Required parameter. The function creates folders and subfolders on remote machines to house the result files of the individual commands. bCleanup param decides 
     if the folders should be left as is, or if they should be cleaned up
-
 .PARAMETER SendComputerCreds
     Optional PSCredentials to connect to the Sender machine
-
 .PARAMETER RecvComputerCreds
     Optional PSCredentials to connect to the Receiver machine
-
 .PARAMETER SendKeyFilePath
     File path to private rsa key needed to connect to Send Machine. Only required if -PassAuth is false.
-
 .PARAMETER RecvKeyFilePath
     File path to private rsa key needed to connect to Recv Machine. Only required if -PassAuth is false.
-
 .PARAMETER BZip
     Required parameter. The function creates folders and subfolders on remote machines to house the result files of the individual commands. BZip param decides 
     if the folders should be compressed or left uncompressed before copying over.
-
 .PARAMETER TimeoutValueBetweenCommandPairs
     Optional parameter to configure the amount of time the tool waits (in seconds) between command pairs before moving to the next set of commands
-
 .PARAMETER PollTimeInSeconds
     Optional parameter to configure the amount of time the tool waits (in seconds) before waking up to check if the TimeoutValueBetweenCommandPairs period has elapsed
-
 .PARAMETER ListeningPort
     Optional port number that the recevier and sender computer SSH server is listening on from Setup script.
-
 .PARAMETER FirewallPortMin
     Optional minimum server port number used for iteration tests to allow firewall to accept pings from
-
 .PARAMETER FirewallPortMax
     Optional maximum server port number used for iteration tests to allow firewall to accept pings from
-
 .PARAMETER RecvDir
     Location of folder on receiver computer that is going to have commands and store results
-
 .PARAMETER SendDir
     Location of folder on sender computer that is going to have commands and store results
-
 #>
 Function ProcessToolCommands{
     param(
@@ -453,10 +423,10 @@ Function ProcessToolCommands{
             Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockEnableToolPermissions -ArgumentList "$SendDir/Sender/$Toolname/$Toolname"
             
             # allow multiple ports in firewall
-            Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockEnableFirewallRules -ArgumentList ("$FirewallPortMin`:$FirewallPortMax/tcp")
-            Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockEnableFirewallRules -ArgumentList ("$FirewallPortMin`:$FirewallPortMax/tcp")
-            Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockEnableFirewallRules -ArgumentList ("$FirewallPortMin`:$FirewallPortMax/udp")
-            Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockEnableFirewallRules -ArgumentList ("$FirewallPortMin`:$FirewallPortMax/udp")
+            Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockEnableFirewallRules -ArgumentList ("$FirewallPortMin`:$FirewallPortMax/tcp", $RecvComputerCreds)
+            Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockEnableFirewallRules -ArgumentList ("$FirewallPortMin`:$FirewallPortMax/tcp", $SendComputerCreds)
+            Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockEnableFirewallRules -ArgumentList ("$FirewallPortMin`:$FirewallPortMax/udp", $RecvComputerCreds)
+            Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockEnableFirewallRules -ArgumentList ("$FirewallPortMin`:$FirewallPortMax/udp", $SendComputerCreds)
             
             # Kill any background processes related to tool in case previous run is still running
             Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockTaskKill -ArgumentList $Toolname
@@ -617,10 +587,10 @@ Function ProcessToolCommands{
     
             LogWrite "Cleaning up the firewall rules that were created as part of script run..."
             # Clean up the firewall rules that this script created
-            Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockCleanupFirewallRules -ArgumentList ("50000:50512/tcp")
-            Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockCleanupFirewallRules -ArgumentList ("50000:50512/tcp")
-            Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockCleanupFirewallRules -ArgumentList ("50000:50512/udp")
-            Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockCleanupFirewallRules -ArgumentList ("50000:50512/udp")
+            Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockCleanupFirewallRules -ArgumentList ("50000:50512/tcp", $RecvComputerCreds)
+            Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockCleanupFirewallRules -ArgumentList ("50000:50512/tcp", $SendComputerCreds)
+            Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockCleanupFirewallRules -ArgumentList ("50000:50512/udp", $RecvComputerCreds)
+            Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockCleanupFirewallRules -ArgumentList ("50000:50512/udp", $SendComputerCreds)
             
             LogWrite "Cleaning up public private key and known hosts that were created as part of script run"
             if ($PassAuth) {
