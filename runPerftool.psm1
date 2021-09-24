@@ -45,13 +45,21 @@ $ScriptBlockEnableToolPermissions = {
 
 $ScriptBlockCleanupFirewallRules = {
     param($port, $creds)
-    Write-Output $creds.GetNetworkCredential().Password | sudo -S ufw delete allow $port | Out-Null
-} # $ScriptBlockCleanupFirewallRules()
+    if ([String]::IsNullOrWhiteSpace($creds.GetNetworkCredential().Password)) {
+        sudo ufw delete allow $port | Out-Null
+    } else {
+        Write-Output $creds.GetNetworkCredential().Password | sudo -S ufw delete allow $port | Out-Null
+    }
+ } # $ScriptBlockCleanupFirewallRules()
 
 $ScriptBlockEnableFirewallRules = {
     param ($port, $creds)
-    Write-Output $creds.GetNetworkCredential().Password | sudo -S ufw allow $port | Out-Null
-} # $ScriptBlockEnableFirewallRules()
+    if ([String]::IsNullOrWhiteSpace($creds.GetNetworkCredential().Password)) {
+        sudo ufw allow $port | Out-Null
+    } else {
+        Write-Output $creds.GetNetworkCredential().Password | sudo -S ufw allow $port | Out-Null
+    }
+ } # $ScriptBlockEnableFirewallRules()
 
 $ScriptBlockTaskKill = {
     param ($taskname)
@@ -221,13 +229,13 @@ Function ProcessCommands{
     [Parameter(ParameterSetName='PassAuth', Mandatory=$False)]  [bool]$PassAuth = $False,
     [Parameter(Mandatory=$True, Position=0, HelpMessage="Dest Machine Username?")]
     [string] $DestIpUserName,
-    [Parameter(Mandatory=$True, Position=0, HelpMessage="Dest Machine Password?")]
+    [Parameter(ParameterSetName='PassAuth', Mandatory=$False, Position=0, HelpMessage="Dest Machine Password?")]
     [SecureString]$DestIpPassword,
     [Parameter(Mandatory=$False, Position=0, HelpMessage="Dest Machine Key File?")]
     [String]$DestIpKeyFile = "",
     [Parameter(Mandatory=$True, Position=0, HelpMessage="Src Machine Username?")]
     [string] $SrcIpUserName,
-    [Parameter(Mandatory=$True, Position=0, HelpMessage="Src Machine Password?")]
+    [Parameter(ParameterSetName='PassAuth', Mandatory=$False, Position=0, HelpMessage="Src Machine Password?")]
     [SecureString]$SrcIpPassword,
     [Parameter(Mandatory=$False, Position=0, HelpMessage="Src Machine Key File?")]
     [String]$SrcIpKeyFile = "",
@@ -248,6 +256,16 @@ Function ProcessCommands{
     $recvDir = "/home/$DestIpUserName/$CommandsDir"
     $sendDir = "/home/$SrcIpUserName/$CommandsDir"
     $CommandsDir = "/home/$TestUserName/$CommandsDir"
+
+    # create password placeholder
+    if ($SrcIpPassword -eq $null) {
+        $SrcIpPassword = ConvertTo-SecureString -String ' ' -AsPlainText -Force
+    }
+
+    # create password placeholder
+    if ($DestIpPassword -eq $null) {
+        $DestIpPassword = ConvertTo-SecureString -String ' ' -AsPlainText -Force
+    }
 
     [PSCredential] $sendIPCreds = New-Object System.Management.Automation.PSCredential($SrcIpUserName, $SrcIpPassword)
 
