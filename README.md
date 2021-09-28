@@ -80,7 +80,12 @@ The command to run tests using public key authentication is:
 ProcessCommands -DestIp "DestinationMachineIP" -SrcIp "SourceMachineIP" -CommandsDir "Temp/MyDirectoryForTesting/msdbg.CurrentMachineName.perftest" -SrcIpUserName SrcUserName -DestIpUserName DestUserName -TestUserName TestUserName -SrcIpKeyPath SrcPrivateKeyFilePath -DestIpKeyPath DestPrivateKeyFilePath
 ```
 
-You will be prompted for password for credentials of both the source and destination machine if you do Password Authentication. It a Secure-string so your password will not be displayed or stored in clear text at any point. Do not include the home path in the command directory.
+You will be prompted for password for credentials of both the source and destination machine if you do Password Authentication. It is a Secure-string so your password will not be displayed or stored in clear text at any point. Do not include the home path in the command directory.
+
+```
+SrcIpPassword? *****
+DestIpPassword? *****
+```
 
 ```PowerShell commands
 Import-Module -Force .\runPerftool.psm1
