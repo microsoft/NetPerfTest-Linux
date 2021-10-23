@@ -10,7 +10,7 @@
     "LagscopeAzure": {
         "Iterations"     : 6,
         "StartPort"      : 50002,
-        "Time"           : 60,
+        "Time"           : 0,
         "PingIterations" : 20000,
         "Options"        : ""
     },
