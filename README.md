@@ -40,6 +40,13 @@ Before proceeding to run the commands/tests that were generated above, we must e
 
 If you choose to use password authentication, use the switch -KeyAuth.
 
+On Linux machines, you must start Powershell with sudo to elevate the permissions for 
+the setup and cleanup or else you will be prompted for a password.
+
+```console
+sudo pwsh
+```
+
 To setup the machine(s), run the following command on each machine to test (ej. Destination and Source machine)
 
 ```PowerShell
@@ -49,8 +56,6 @@ SetupTearDown.ps1 -Setup
 ```PowerShell
 SetupTearDown.ps1 -Setup -PassAuth
 ```
-
-You will be prompted for password for the computer you are running the script on to enable to firewall and edit files. It is a Secure-string so your password will not be displayed or stored in clear text at any point.
 
 ## Command Execution and Result Collection
 
@@ -75,7 +80,12 @@ The command to run tests using public key authentication is:
 ProcessCommands -DestIp "DestinationMachineIP" -SrcIp "SourceMachineIP" -CommandsDir "Temp/MyDirectoryForTesting/msdbg.CurrentMachineName.perftest" -SrcIpUserName SrcUserName -DestIpUserName DestUserName -TestUserName TestUserName -SrcIpKeyPath SrcPrivateKeyFilePath -DestIpKeyPath DestPrivateKeyFilePath
 ```
 
-You will be prompted for password for credentials of both the source and destination machine. It a Secure-string so your password will not be displayed or stored in clear text at any point. Do not include the home path in the command directory
+You will be prompted for password for credentials of both the source and destination machine if you do Password Authentication. It is a Secure-string so your password will not be displayed or stored in clear text at any point. Do not include the home path in the command directory.
+
+```
+SrcIpPassword? *****
+DestIpPassword? *****
+```
 
 ```PowerShell commands
 Import-Module -Force .\runPerftool.psm1
