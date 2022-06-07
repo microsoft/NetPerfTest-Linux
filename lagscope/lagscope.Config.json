@@ -40,9 +40,9 @@
     },
 
     "LagscopeDemo": {
-        "Iterations"     : 2,
+        "Iterations"     : 1,
         "StartPort"      : 50002,
-        "Time"           : 10,
+        "Time"           : 5,
         "PingIterations" : 20000,
         "Options"        : ""
     }

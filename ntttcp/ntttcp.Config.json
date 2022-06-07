@@ -100,7 +100,7 @@
     },
 
     "NtttcpDemo": {
-        "Iterations"  : 2,
+        "Iterations"  : 1,
         "StartPort"   : 50002,
         "tcp" : {
             "BufferLen"   : [65536],
