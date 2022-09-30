@@ -14,7 +14,7 @@
         },
         "Warmup"      : 2,
         "Cooldown"    : 2,
-        "Runtime"        : 60,
+        "Runtime"     : 60,
         "RecvOptions" : "",
         "SendOptions" : ""
     },
@@ -24,17 +24,17 @@
         "StartPort"   : 50002,
         "tcp" : {
             "BufferLen"   : [65536],
-            "Connections" : [1, 64, 256],
+            "Connections" : [64],
             "Options"     : ""
         },
         "udp" : {
             "BufferLen"   : [1472],
-            "Connections" : [1, 64, 128],
+            "Connections" : [64],
             "Options"     : ""
         },
         "Warmup"      : 2,
         "Cooldown"    : 2,
-        "Runtime"        : 60,
+        "Runtime"     : 60,
         "RecvOptions" : "",
         "SendOptions" : ""
     },
@@ -54,7 +54,7 @@
         },
         "Warmup"      : 2,
         "Cooldown"    : 2,
-        "Runtime"        : 10,
+        "Runtime"     : 10,
         "RecvOptions" : "-e",
         "SendOptions" : ""
     }
