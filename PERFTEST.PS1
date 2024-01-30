@@ -2,14 +2,14 @@
 # Script Input Parameters Enforcement
 #===============================================
 Param(
-    [parameter(Mandatory=$false)] [string] $Config = "Default",
+    [parameter(Mandatory=$false)] [string] $Config = 'Default',
     [parameter(Mandatory=$true)]  [string] $DestIp,
     [parameter(Mandatory=$true)]  [string] $SrcIp,
     [parameter(Mandatory=$true)]  [String] $OutDir = "",
     [parameter(Mandatory=$true)]  [string] $DestUserName,
     [parameter(Mandatory=$true)]  [string] $SrcUserName,
     [parameter(Mandatory=$true)]  [string] $TestUserName,
-    [parameter(Mandatory=$false)] [Array] $ToolList = @("ntttcp", "lagscope", "ncps")
+    [parameter(Mandatory=$false)] [Array] $ToolList = @('ntttcp', 'lagscope', 'ncps')
 )
 $scriptName = $MyInvocation.MyCommand.Name 
 
