@@ -1,8 +1,8 @@
 Param(
-    [Parameter(Mandatory=$false)] [String] $Config = 'Default',
-    [Parameter(Mandatory=$true)]  [String] $DestIp,
-    [Parameter(Mandatory=$true)]  [String] $SrcIp,
-    [Parameter(Mandatory=$true)]  [ValidateScript({Test-Path $_ -PathType Container})] [String] $OutDir,
+    [Parameter(Mandatory=$false)] [ValidateScript({-Not [String]::IsNullOrWhiteSpace($_)})] [String] $Config = 'Default',
+    [Parameter(Mandatory=$true)] [ValidateScript({-Not [String]::IsNullOrWhiteSpace($_)})] [String] $DestIp,
+    [Parameter(Mandatory=$true)] [ValidateScript({-Not [String]::IsNullOrWhiteSpace($_)})] [String] $SrcIp,
+    [Parameter(Mandatory=$true)] [ValidateScript({Test-Path $_ -PathType Container})] [String] $OutDir,
     [parameter(Mandatory=$true)]  [string] $DestDir,
     [parameter(Mandatory=$true)]  [string] $SrcDir 
 )
@@ -154,9 +154,9 @@ function validate_config {
 #===============================================
 function test_main {
     Param(
-        [Parameter(Mandatory=$false)] [String] $Config = 'Default',
-        [Parameter(Mandatory=$true)]  [String] $DestIp,
-        [Parameter(Mandatory=$true)]  [String] $SrcIp,
+        [Parameter(Mandatory=$false)] [ValidateScript({-Not [String]::IsNullOrWhiteSpace($_)})] [String] $Config = 'Default',
+        [Parameter(Mandatory=$true)] [ValidateScript({-Not [String]::IsNullOrWhiteSpace($_)})] [String] $DestIp,
+        [Parameter(Mandatory=$true)] [ValidateScript({-Not [String]::IsNullOrWhiteSpace($_)})] [String] $SrcIp,
         [Parameter(Mandatory=$true)]  [ValidateScript({Test-Path $_ -PathType Container})] [String] $OutDir,
         [parameter(Mandatory=$true)]  [string] $DestDir,
         [parameter(Mandatory=$true)]  [string] $SrcDir

@@ -3,12 +3,12 @@
 #===============================================
 Param(
     [parameter(Mandatory=$false)] [string] $Config = 'Default',
-    [parameter(Mandatory=$true)]  [string] $DestIp,
-    [parameter(Mandatory=$true)]  [string] $SrcIp,
-    [parameter(Mandatory=$true)]  [String] $OutDir = "",
-    [parameter(Mandatory=$true)]  [string] $DestUserName,
-    [parameter(Mandatory=$true)]  [string] $SrcUserName,
-    [parameter(Mandatory=$true)]  [string] $TestUserName,
+    [parameter(Mandatory=$true)] [ValidateScript({-Not [String]::IsNullOrWhiteSpace($_)})] [string] $DestIp,
+    [parameter(Mandatory=$true)] [ValidateScript({-Not [String]::IsNullOrWhiteSpace($_)})] [string] $SrcIp,
+    [parameter(Mandatory=$true)]  [String] $OutDir,
+    [parameter(Mandatory=$true)] [ValidateScript({-Not [String]::IsNullOrWhiteSpace($_)})] [string] $DestUserName,
+    [parameter(Mandatory=$true)] [ValidateScript({-Not [String]::IsNullOrWhiteSpace($_)})] [string] $SrcUserName,
+    [parameter(Mandatory=$true)] [ValidateScript({-Not [String]::IsNullOrWhiteSpace($_)})] [string] $TestUserName,
     [parameter(Mandatory=$false)] [Array] $ToolList = @('ntttcp', 'lagscope', 'ncps')
 )
 $scriptName = $MyInvocation.MyCommand.Name 
@@ -94,12 +94,12 @@ function env_destroy {
 function test_main {
     Param(
         [parameter(Mandatory=$false)] [string] $Config = "Default",
-        [parameter(Mandatory=$true)]  [string] $DestIp,
-        [parameter(Mandatory=$true)]  [string] $SrcIp,
-        [parameter(Mandatory=$true)]  [String] $OutDir = "",
-        [parameter(Mandatory=$true)]  [string] $DestUserName,
-        [parameter(Mandatory=$true)]  [string] $SrcUserName,
-        [parameter(Mandatory=$true)]  [string] $TestUserName,
+        [parameter(Mandatory=$true)] [ValidateScript({-Not [String]::IsNullOrWhiteSpace($_)})] [string] $DestIp,
+        [parameter(Mandatory=$true)] [ValidateScript({-Not [String]::IsNullOrWhiteSpace($_)})] [string] $SrcIp,
+        [parameter(Mandatory=$true)]  [String] $OutDir,
+        [parameter(Mandatory=$true)] [ValidateScript({-Not [String]::IsNullOrWhiteSpace($_)})] [string] $DestUserName,
+        [parameter(Mandatory=$true)] [ValidateScript({-Not [String]::IsNullOrWhiteSpace($_)})] [string] $SrcUserName,
+        [parameter(Mandatory=$true)] [ValidateScript({-Not [String]::IsNullOrWhiteSpace($_)})] [string] $TestUserName,
         [parameter(Mandatory=$false)] [Array] $ToolList = @('ntttcp', 'lagscope', 'ncps')
     )
     Clear-Host
