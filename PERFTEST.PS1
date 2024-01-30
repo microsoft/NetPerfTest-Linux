@@ -100,13 +100,13 @@ function test_main {
         [parameter(Mandatory=$true)]  [string] $DestUserName,
         [parameter(Mandatory=$true)]  [string] $SrcUserName,
         [parameter(Mandatory=$true)]  [string] $TestUserName,
-        [parameter(Mandatory=$false)] [Array] $ToolList = @("ntttcp", "lagscope", "ncps")
+        [parameter(Mandatory=$false)] [Array] $ToolList = @('ntttcp', 'lagscope', 'ncps')
     )
     Clear-Host
     input_display
 
     $start   = Get-Date
-    $version = "2020.09.28.0" # Version within date context
+    $version = '2020.09.28.0' # Version within date context
 
     Write-Host $start
     Write-Host $version
@@ -126,13 +126,13 @@ function test_main {
     env_create  -OutDir $workDir
 
     # lagscope does not have detail 
-    if ("lagscope" -in $ToolList) {
+    if ('lagscope' -in $ToolList) {
         & "$PSScriptRoot/lagscope/lagscope.TESTGEN.ps1"   -DestIp $g_DestIp -SrcIp $g_SrcIp -OutDir $workDir -DestDir $DestDir -SrcDir $SrcDir -Config $g_config
     }
-    if ("ntttcp" -in $ToolList) {
+    if ('ntttcp' -in $ToolList) {
         & "$PSScriptRoot/ntttcp/ntttcp.TESTGEN.ps1" -DestIp $g_DestIp -SrcIp $g_SrcIp -OutDir $workDir -Config $g_config -DestDir $DestDir -SrcDir $SrcDir
     }
-    if ("ncps" -in $ToolList) {
+    if ('ncps' -in $ToolList) {
         & "$PSScriptRoot/ncps/ncps.TESTGEN.ps1" -DestIp $g_DestIp -SrcIp $g_SrcIp -OutDir $workDir -Config $g_config -DestDir $DestDir -SrcDir $SrcDir
     }
     } test_main @PSBoundParameters # Entry Point

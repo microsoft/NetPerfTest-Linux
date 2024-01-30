@@ -1,8 +1,8 @@
 Param(
-    [Parameter(Mandatory=$false)] [String] $Config = "Default",
+    [Parameter(Mandatory=$false)] [String] $Config = 'Default',
     [Parameter(Mandatory=$true)]  [String] $DestIp,
     [Parameter(Mandatory=$true)]  [String] $SrcIp,
-    [Parameter(Mandatory=$true)]  [ValidateScript({Test-Path $_ -PathType Container})] [String] $OutDir = "",
+    [Parameter(Mandatory=$true)]  [ValidateScript({Test-Path $_ -PathType Container})] [String] $OutDir,
     [parameter(Mandatory=$true)]  [string] $DestDir,
     [parameter(Mandatory=$true)]  [string] $SrcDir 
 )
@@ -27,9 +27,8 @@ function input_display {
 } # input_display()
 
 function banner {
-    [CmdletBinding()]
     Param(
-        [parameter(Mandatory=$true)] [String] $Msg
+        [parameter(Mandatory=$true)] [ValidateScript({-Not [String]::IsNullOrWhiteSpace($_)})] [String] $Msg
     )
     Write-Output "`n==========================================================================="
     Write-Output "| $Msg"
@@ -37,9 +36,8 @@ function banner {
 } # banner()
 
 function test_client {
-    [CmdletBinding()]
     Param(
-        [Parameter(Mandatory=$true)] [String] $OutDir,
+        [Parameter(Mandatory=$true)] [ValidateScript({Test-Path $_ -PathType Container})] [String] $OutDir,
         [Parameter(Mandatory=$true)] [String] $Filename,
         [parameter(Mandatory=$true)] [string] $SendDir,
         [Parameter(Mandatory=$true)] [String] $Threads,
@@ -60,9 +58,8 @@ function test_client {
 } # test_recv()
 
 function test_server {
-    [CmdletBinding()]
     Param(
-        [Parameter(Mandatory=$true)] [String] $OutDir,
+        [Parameter(Mandatory=$true)] [ValidateScript({Test-Path $_ -PathType Container})] [String] $OutDir,
         [Parameter(Mandatory=$true)] [String] $Filename,
         [Parameter(Mandatory=$true)] [String] $Threads,
         [parameter(Mandatory=$true)] [string] $RecvDir
@@ -79,9 +76,8 @@ function test_server {
 } # test_send()
 
 function test_iterations {
-    [CmdletBinding()]
     Param(
-        [Parameter(Mandatory=$true)] [String] $OutDir,
+        [Parameter(Mandatory=$true)] [ValidateScript({Test-Path $_ -PathType Container})] [String] $OutDir,
         [Parameter(Mandatory=$true)] [String] $Filename,
         [parameter(Mandatory=$true)] [string] $SendDir,
         [parameter(Mandatory=$true)] [string] $RecvDir,
@@ -101,9 +97,8 @@ function test_iterations {
 } # test_iterations()
 
 function test_ncps {
-    [CmdletBinding()]
     Param(
-        [parameter(Mandatory=$true)] [String] $OutDir,
+        [parameter(Mandatory=$true)] [ValidateScript({Test-Path $_ -PathType Container})] [String] $OutDir,
         [parameter(Mandatory=$true)] [string] $SendDir,
         [parameter(Mandatory=$true)] [string] $RecvDir
     )
@@ -132,7 +127,7 @@ function test_ncps {
 function validate_config {
     $isValid = $true
 
-    $int_vars = @("Iterations", "Port", "Threads", "ConnectionsPerThread", "ConnectionDurationMS", "Warmup", "Runtime")
+    $int_vars = @('Iterations', 'Port', 'Threads', 'ConnectionsPerThread', 'ConnectionDurationMS', 'Warmup', 'Runtime')
     foreach ($var in $int_vars) {
         $invalid = $g_Config.$var | where {$_ -lt 0}
 
@@ -146,7 +141,7 @@ function validate_config {
     $invalid = $g_Config.DataTransferMode | where {$_ -notin $valid_DataTransferMode}
 
     if ($invalid -or ($null -eq $g_Config.DataTransferMode)) {
-        Write-Output "DataTransferMode must be 0, 1, or 2."
+        Write-Output 'DataTransferMode must be 0, 1, or 2.'
         $isValid = $false
     }
 
@@ -159,17 +154,15 @@ function validate_config {
 #===============================================
 function test_main {
     Param(
-        [Parameter(Mandatory=$false)] [String] $Config = "Default",
+        [Parameter(Mandatory=$false)] [String] $Config = 'Default',
         [Parameter(Mandatory=$true)]  [String] $DestIp,
         [Parameter(Mandatory=$true)]  [String] $SrcIp,
-        [Parameter(Mandatory=$true)]  [ValidateScript({Test-Path $_ -PathType Container})] [String] $OutDir = "",
+        [Parameter(Mandatory=$true)]  [ValidateScript({Test-Path $_ -PathType Container})] [String] $OutDir,
         [parameter(Mandatory=$true)]  [string] $DestDir,
         [parameter(Mandatory=$true)]  [string] $SrcDir
     )
 
     try {
-        # input_display
-
         # get config variables
         $allConfig = Get-Content -Path "$PSScriptRoot\ncps.Config.json" | ConvertFrom-Json
         [Object] $g_Config = $allConfig."Ncps$Config"
@@ -185,25 +178,25 @@ function test_main {
 
         [String] $g_DestIp  = $DestIp.Trim()
         [String] $g_SrcIp   = $SrcIp.Trim()
-        [String] $dir       = (Join-Path -Path $OutDir -ChildPath "ncps") 
+        [String] $dir       = (Join-Path -Path $OutDir -ChildPath 'ncps') 
         [String] $g_log     = "$dir\NCPS.Commands.txt"
         [String] $g_logSend = "$dir\NCPS.Commands.Send.txt"
         [String] $g_logRecv = "$dir\NCPS.Commands.Recv.txt"
 
         # Directory for sender computer
-        [string] $sendDir   = (Join-Path -Path $SrcDir -ChildPath "ncps")
+        [string] $sendDir   = (Join-Path -Path $SrcDir -ChildPath 'ncps')
         # Directory for receiver computer
-        [string] $recvDir   = (Join-Path -Path $DestDir -ChildPath "ncps")
+        [string] $recvDir   = (Join-Path -Path $DestDir -ChildPath 'ncps')
         
         $null = New-Item -ItemType directory -Path $dir
         
         # Optional - Edit spaces in output path for Invoke-Expression compatibility
         $dir  = $dir  -replace ' ','` '
 
-        banner -Msg "NCPS Tests"
+        banner -Msg 'NCPS Tests'
         test_ncps -OutDir $dir -SendDir $sendDir -RecvDir $recvDir
     } catch {
-        Write-Output "Unable to generate NCPS commands"
+        Write-Output 'Unable to generate NCPS commands'
         Write-Output "Exception $($_.Exception.Message) in $($MyInvocation.MyCommand.Name)"
     }
 } test_main @PSBoundParameters # Entry Point
