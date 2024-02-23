@@ -48,10 +48,11 @@ function test_client {
     )
 
     [String] $out = Join-Path $SendDir "send.$Filename"
+    [string] $cmdOut = (Join-Path -Path $OutDir -ChildPath "send.$Filename")
 
     $thread_params = "-r $Threads $g_SrcIp,$($g_Config.Port),$g_DestIp,$($g_Config.Port),$ConnectionsPerThread,$ConnectionsPerThread,$ConnectionDurationMS,$DataTransferMode"
     [String] $cmd = "ncps.exe -c $thread_params -wt $($g_Config.Warmup) -t $($g_Config.Runtime) -o $out.txt $($g_Config.Options)"
-    Write-Output $cmd | Out-File -Encoding ascii -Append "$out.txt"
+    Write-Output $cmd | Out-File -Encoding ascii -Append "$cmdOut.txt"
     Write-Output $cmd | Out-File -Encoding ascii -Append $g_log
     Write-Output $cmd | Out-File -Encoding ascii -Append $g_logSend
     Write-Output   $cmd
@@ -66,10 +67,11 @@ function test_server {
     )
 
     [String] $out = Join-Path $RecvDir "recv.$Filename"
+    [string] $cmdOut = (Join-Path -Path $OutDir -ChildPath "send.$Filename")
 
     $thread_params = "-r $Threads $g_DestIp,$($g_Config.Port)"
     [String] $cmd = "ncps.exe -s $thread_params -wt $($g_Config.Warmup) -t $($g_Config.Runtime) -o $out.txt $($g_Config.Options)"
-    Write-Output $cmd | Out-File -Encoding ascii -Append "$out.txt"
+    Write-Output $cmd | Out-File -Encoding ascii -Append "$cmdOut.txt"
     Write-Output $cmd | Out-File -Encoding ascii -Append $g_log
     Write-Output $cmd | Out-File -Encoding ascii -Append $g_logRecv  
     Write-Output   $cmd 
