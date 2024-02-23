@@ -94,7 +94,7 @@ function test_iterations {
         test_client -OutDir $OutDir -Filename "$Filename.iter$i" -Threads $Threads `
                     -ConnectionsPerThread $ConnectionsPerThread -ConnectionDurationMS $ConnectionDurationMS `
                     -DataTransferMode $DataTransferMode -MaxPendingRequests $MaxPendingRequests -SendDir $SendDir
-        test_server -OutDir $OutDir -Filename "$Filename.iter$i" -Threads $Threads -SendDir $SendDir
+        test_server -OutDir $OutDir -Filename "$Filename.iter$i" -Threads $Threads -RecvDir $RecvDir
     }
 } # test_iterations()
 
