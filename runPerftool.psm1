@@ -271,12 +271,20 @@ Function ProcessCommands{
 
     [PSCredential] $recvIPCreds = New-Object System.Management.Automation.PSCredential($DestIpUserName, $DestIpPassword)
 
-    LogWrite "Processing lagscope commands for Linux" $true
-    ProcessToolCommands -PassAuth:$PassAuth -RecvKeyFilePath $DestIpKeyFile -SendKeyFilePath $SrcIpKeyFile -Toolname "lagscope" -RecvComputerName $recvComputerName -RecvComputerCreds $recvIPCreds -SendComputerName $sendComputerName -SendComputerCreds $sendIPCreds -TestUserName $TestUserName -CommandsDir $CommandsDir -Bcleanup $Bcleanup -BZip $ZipResults -TimeoutValueBetweenCommandPairs $TimeoutValueInSeconds -PollTimeInSeconds $PollTimeInSeconds -ListeningPort $ListeningPort -FirewallPortMin $FirewallPortMin -FirewallPortMax $FirewallPortMax -RecvDir $recvDir -SendDir $sendDir
+    if (Test-Path -Path "$commandsDir\lagscope") {
+        LogWrite "Processing lagscope commands for Linux" $true
+        ProcessToolCommands -PassAuth:$PassAuth -RecvKeyFilePath $DestIpKeyFile -SendKeyFilePath $SrcIpKeyFile -Toolname "lagscope" -RecvComputerName $recvComputerName -RecvComputerCreds $recvIPCreds -SendComputerName $sendComputerName -SendComputerCreds $sendIPCreds -TestUserName $TestUserName -CommandsDir $CommandsDir -Bcleanup $Bcleanup -BZip $ZipResults -TimeoutValueBetweenCommandPairs $TimeoutValueInSeconds -PollTimeInSeconds $PollTimeInSeconds -ListeningPort $ListeningPort -FirewallPortMin $FirewallPortMin -FirewallPortMax $FirewallPortMax -RecvDir $recvDir -SendDir $sendDir
+    }
 
-    LogWrite "Processing ntttcp commands for Linux" $true
-    ProcessToolCommands -PassAuth $PassAuth -RecvKeyFilePath $DestIpKeyFile -SendKeyFilePath $SrcIpKeyFile -Toolname "ntttcp" -RecvComputerName $recvComputerName -RecvComputerCreds $recvIPCreds -SendComputerName $sendComputerName -SendComputerCreds $sendIPCreds -TestUserName $TestUserName -CommandsDir $CommandsDir -Bcleanup $Bcleanup -BZip $ZipResults -TimeoutValueBetweenCommandPairs $TimeoutValueInSeconds -PollTimeInSeconds $PollTimeInSeconds -ListeningPort $ListeningPort -FirewallPortMin $FirewallPortMin -FirewallPortMax $FirewallPortMax -RecvDir $recvDir -SendDir $sendDir
+    if (Test-Path -Path "$commandsDir\ntttcp") {
+        LogWrite "Processing ntttcp commands for Linux" $true
+        ProcessToolCommands -PassAuth $PassAuth -RecvKeyFilePath $DestIpKeyFile -SendKeyFilePath $SrcIpKeyFile -Toolname "ntttcp" -RecvComputerName $recvComputerName -RecvComputerCreds $recvIPCreds -SendComputerName $sendComputerName -SendComputerCreds $sendIPCreds -TestUserName $TestUserName -CommandsDir $CommandsDir -Bcleanup $Bcleanup -BZip $ZipResults -TimeoutValueBetweenCommandPairs $TimeoutValueInSeconds -PollTimeInSeconds $PollTimeInSeconds -ListeningPort $ListeningPort -FirewallPortMin $FirewallPortMin -FirewallPortMax $FirewallPortMax -RecvDir $recvDir -SendDir $sendDir
+    }
 
+    if (Test-Path -Path "$commandsDir\ncps") {
+        LogWrite "Processing ncps commands for Linux" $true
+        ProcessToolCommands -PassAuth $PassAuth -RecvKeyFilePath $DestIpKeyFile -SendKeyFilePath $SrcIpKeyFile -Toolname "ncps" -RecvComputerName $recvComputerName -RecvComputerCreds $recvIPCreds -SendComputerName $sendComputerName -SendComputerCreds $sendIPCreds -TestUserName $TestUserName -CommandsDir $CommandsDir -Bcleanup $Bcleanup -BZip $ZipResults -TimeoutValueBetweenCommandPairs $TimeoutValueInSeconds -PollTimeInSeconds $PollTimeInSeconds -ListeningPort $ListeningPort -FirewallPortMin $FirewallPortMin -FirewallPortMax $FirewallPortMax -RecvDir $recvDir -SendDir $sendDir
+    }
     LogWrite "ProcessCommands Done!" $true
     Move-Item -Force -Path $Logfile -Destination "$CommandsDir" -ErrorAction Ignore
 
@@ -456,7 +464,18 @@ Function ProcessToolCommands{
             # Copy the tool binaries to the remote machines
             Copy-Item -Path "$toolpath/$Toolname" -Destination "$RecvDir/Receiver/$Toolname" -ToSession $recvPSSession
             Copy-Item -Path "$toolpath/$Toolname" -Destination "$SendDir/Sender/$Toolname" -ToSession $sendPSSession
-    
+            
+            if ($Toolname -eq 'ncps') {
+                Copy-Item -Path "$toolpath/vcruntime140.dll" -Destination "$RecvDir/Receiver/$Toolname" -ToSession $recvPSSession
+                Copy-Item -Path "$toolpath/vcruntime140.dll" -Destination "$SendDir/Sender/$Toolname" -ToSession $sendPSSession
+                Copy-Item -Path "$toolpath/rc.local" -Destination "/etc/rc.local" -ToSession $sendPSSession
+                Copy-Item -Path "$toolpath/rc.local" -Destination "/etc/rc.local" -ToSession $recvPSSession
+                Invoke-Command -Session $recvPSSession -ScriptBlock { "`n*   soft    nofile  1048575 `n*   hard    nofile  1048575 " >> /etc/security/limits.conf} 
+                Invoke-Command -Session $sendPSSession -ScriptBlock { "`n*   soft    nofile  1048575 `n*   hard    nofile  1048575 " >> /etc/security/limits.conf} 
+                Invoke-Command -Session $recvPSSession -ScriptBlock { chmod +x /etc/rc.local} 
+                Invoke-Command -Session $sendPSSession -ScriptBlock { chmod +x /etc/rc.local} 
+            }
+
             # Enable execution of tool binaries 
             Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockEnableToolPermissions -ArgumentList "$RecvDir/Receiver/$Toolname/$Toolname"
             Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockEnableToolPermissions -ArgumentList "$SendDir/Sender/$Toolname/$Toolname"
