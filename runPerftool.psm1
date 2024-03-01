@@ -476,7 +476,7 @@ Function ProcessToolCommands{
                 Invoke-Command -Session $sendPSSession -ScriptBlock { chmod +x /etc/rc.local} 
             }
 
-            # Enable execution of tool binarie s 
+            # Enable execution of tool binaries 
             Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockEnableToolPermissions -ArgumentList "$RecvDir/Receiver/$Toolname/$Toolname"
             Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockEnableToolPermissions -ArgumentList "$SendDir/Sender/$Toolname/$Toolname"
             
