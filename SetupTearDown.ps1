@@ -36,12 +36,12 @@ Function SetupRemoting{
     Write-Host "Installing PSRemoting via SSH on this computer..."
     Write-Host "Editing sshd_config file to allow for public key and password authentication for port $Port"
     # edit sshd_config to listen to port and allow public key and password authentication
-    sudo sed -i "s/#\?\(PubkeyAuthentication\s*\).*$/\1yes/" /etc/ssh/sshd_config
+    sed -i "s/#\?\(PubkeyAuthentication\s*\).*$/\1yes/" /etc/ssh/sshd_config
     if ($PassAuth) 
     {
-        sudo sed -i 's/#\?\(PasswordAuthentication\s*\).*$/\1yes/' /etc/ssh/sshd_config
+        sed -i 's/#\?\(PasswordAuthentication\s*\).*$/\1yes/' /etc/ssh/sshd_config
     }
-    sudo sed -i "s/#\?\(Port\s*\).*$/\1$Port/" /etc/ssh/sshd_config
+    sed -i "s/#\?\(Port\s*\).*$/\1$Port/" /etc/ssh/sshd_config
     # allow for powershell remoting via ssh 
     $pwshCommand = Get-Content -Path /etc/ssh/sshd_config | Where-Object {$_.Contains("Subsystem powershell /usr/bin/pwsh -sshs -NoLogo")}
     if ([string]::IsNullOrEmpty($pwshCommand)) {
@@ -54,12 +54,15 @@ Function SetupRemoting{
     }
     Write-Host "Starting OpenSSH Server"
     # restart ssh server
-    sudo service sshd restart | Out-Null 
+    service sshd restart | Out-Null 
     Write-Host "Enabling firewall and allowing ssh service from port $Port"
     # enable ssh server and listening port
-    sudo ufw enable | Out-Null 
-    sudo ufw allow ssh | Out-Null 
-    sudo ufw allow $Port/tcp | Out-Null 
+    ufw enable | Out-Null 
+    ufw allow ssh | Out-Null 
+    ufw allow $Port/tcp | Out-Null 
+    Copy-Item -Path "$toolpath/rc.local" -Destination "/etc/rc.local"
+    echo "`n*   soft    nofile  1048575 `n*   hard    nofile  1048575 " >> /etc/security/limits.conf
+    chmod +x /etc/rc.local
 } # SetupRemoting()
 
 
@@ -70,15 +73,15 @@ Function CleanupRemoting{
     Write-Host "Disabling PSRemoting via SSH on this computer..."
     Write-Host "Editing sshd_config file to allow for public key and password authentication to default port"
     # edit ssh server to listen to default port of 22
-    sudo sed -i 's/#\?\(Port\s*\).*$/\122/' /etc/ssh/sshd_config
+    sed -i 's/#\?\(Port\s*\).*$/\122/' /etc/ssh/sshd_config
     # restart and stop sshd server 
-    sudo service sshd restart | Out-Null 
+    service sshd restart | Out-Null 
     Write-Host "Stopping Open-SSH Server service"
-    sudo service sshd stop | Out-Null 
+    service sshd stop | Out-Null 
     # delete ssh and port firewall rules
     Write-Host "Deleting firewall rule that allows ssh service from port $Port"
-    sudo ufw delete allow $Port/tcp | Out-Null 
-    sudo ufw delete allow ssh | Out-Null 
+    ufw delete allow $Port/tcp | Out-Null 
+    ufw delete allow ssh | Out-Null 
 } # CleanupRemoting()
 
 #Main-function

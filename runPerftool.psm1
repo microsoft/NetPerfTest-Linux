@@ -468,12 +468,6 @@ Function ProcessToolCommands{
             if ($Toolname -eq 'ncps') {
                 Copy-Item -Path "$toolpath/vcruntime140.dll" -Destination "$RecvDir/Receiver/$Toolname" -ToSession $recvPSSession
                 Copy-Item -Path "$toolpath/vcruntime140.dll" -Destination "$SendDir/Sender/$Toolname" -ToSession $sendPSSession
-                Copy-Item -Path "$toolpath/rc.local" -Destination "/etc/rc.local" -ToSession $sendPSSession
-                Copy-Item -Path "$toolpath/rc.local" -Destination "/etc/rc.local" -ToSession $recvPSSession
-                Invoke-Command -Session $recvPSSession -ScriptBlock { "`n*   soft    nofile  1048575 `n*   hard    nofile  1048575 " >> /etc/security/limits.conf} 
-                Invoke-Command -Session $sendPSSession -ScriptBlock { "`n*   soft    nofile  1048575 `n*   hard    nofile  1048575 " >> /etc/security/limits.conf} 
-                Invoke-Command -Session $recvPSSession -ScriptBlock { chmod +x /etc/rc.local} 
-                Invoke-Command -Session $sendPSSession -ScriptBlock { chmod +x /etc/rc.local} 
             }
 
             # Enable execution of tool binaries 
