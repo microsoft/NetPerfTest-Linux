@@ -60,7 +60,7 @@ Function SetupRemoting{
     ufw enable | Out-Null 
     ufw allow ssh | Out-Null 
     ufw allow $Port/tcp | Out-Null 
-    Copy-Item -Path "$toolpath/rc.local" -Destination "/etc/rc.local"
+    Copy-Item -Path "./ncps/rc.local" -Destination "/etc/rc.local"
     echo "`n*   soft    nofile  1048575 `n*   hard    nofile  1048575 " >> /etc/security/limits.conf
     chmod +x /etc/rc.local
 } # SetupRemoting()

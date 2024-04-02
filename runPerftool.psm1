@@ -579,19 +579,19 @@ Function ProcessToolCommands{
                 Remove-Item -Force -Path ("{0}/{1}_Sender.zip" -f $CommandsDir, $Toolname) -Recurse -ErrorAction SilentlyContinue
     
                 #copy the zip files from remote machines to the current (orchestrator) machines
-                Copy-Item -Path "$RecvDir/Recv.zip" -Destination ("{0}/{1}_Receiver.zip" -f $CommandsDir, $Toolname) -FromSession $recvPSSession -Force
-                Copy-Item -Path "$SendDir/Send.zip" -Destination ("{0}/{1}_Sender.zip" -f $CommandsDir, $Toolname) -FromSession $sendPSSession -Force
+                Copy-Item -Path "$RecvDir/Recv.zip" -Destination ("{0}/{1}_Receiver.zip" -f $RecvDir, $Toolname) -FromSession $recvPSSession -Force
+                Copy-Item -Path "$SendDir/Send.zip" -Destination ("{0}/{1}_Sender.zip" -f $SendDir, $Toolname) -FromSession $sendPSSession -Force
     
-                Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockRemoveFileFolder -ArgumentList "$CommandsDir/Recv.zip"
-                Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockRemoveFileFolder -ArgumentList "$CommandsDir/Send.zip"
+                Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockRemoveFileFolder -ArgumentList "$RecvDir/Recv.zip"
+                Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockRemoveFileFolder -ArgumentList "$SendDir/Send.zip"
             } else {
                 LogWrite "Copying directories..."
                 Remove-Item -Force -Path ("{0}/{1}_Receiver" -f $CommandsDir, $Toolname) -Recurse -ErrorAction SilentlyContinue
                 Remove-Item -Force -Path ("{0}/{1}_Sender" -f $CommandsDir, $Toolname) -Recurse -ErrorAction SilentlyContinue
     
                 #copy just the entire results folder from remote machines to the current (orchestrator) machine
-                Copy-Item -Path "$CommandsDir/Receiver/$Toolname/" -Recurse -Destination ("{0}/{1}_Receiver" -f $CommandsDir, $Toolname) -FromSession $recvPSSession -Force
-                Copy-Item -Path "$CommandsDir/Sender/$Toolname/" -Recurse -Destination ("{0}/{1}_Sender" -f $CommandsDir, $Toolname) -FromSession $sendPSSession -Force
+                Copy-Item -Path "$RecvDir/Receiver/$Toolname/" -Recurse -Destination ("{0}/{1}_Receiver" -f $CommandsDir, $Toolname) -FromSession $recvPSSession -Force
+                Copy-Item -Path "$SendDir/Sender/$Toolname/" -Recurse -Destination ("{0}/{1}_Sender" -f $CommandsDir, $Toolname) -FromSession $sendPSSession -Force
             }
     
             if ($Bcleanup -eq $True) { 
