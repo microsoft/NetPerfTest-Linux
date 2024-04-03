@@ -19,7 +19,8 @@ ncps -c <IP address to connect to> : run as client with the following options:
     -np <number of remote TCP ports to connect to> : (default: thread count)
         Tip: The port range specified by a client's -bp/-np parameters must be a subset of the range
              specified by the server's -bp/-np parameters.
-    -bcp <base local TCP port number to bind to> : (default: 0 -- local ephemeral ports picked by TCPIP)
+    -bcp <base local TCP port number to bind to> : (default: 
+    0 -- local ephemeral ports picked by TCPIP)
     -ncp <number of local TCP ports to bind to> : (ignored if -bcp == 0, must be specified otherwise)
        If client specifies an explicit local port range via -bcp and -ncp parameters, this local port range
        is divided across client threads and each thread explicitly binds (with SO_REUSEADDR) to the local ports

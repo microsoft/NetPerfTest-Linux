@@ -13,7 +13,7 @@
     },
 
     "NcpsAzure": {
-        "Iterations": 1,
+        "Iterations": 3,
         "Port": 50000,
         "Threads": [1, 8, 64],
         "ConnectionsPerThread": [1, 2],
