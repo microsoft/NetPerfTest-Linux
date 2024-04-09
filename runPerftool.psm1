@@ -45,7 +45,12 @@ $ScriptBlockEnableToolPermissions = {
 
 $ScriptBlockCleanupFirewallRules = {
     param($port, $creds)
-    if ([String]::IsNullOrWhiteSpace($creds.GetNetworkCredential().Password)) {
+    
+    $hasUfw = $(dpkg --get-selections | grep ufw)
+    if ($null -eq $hasUfw) {
+        Write-Host 'Ufw is not installed'
+    }
+    elseif ([String]::IsNullOrWhiteSpace($creds.GetNetworkCredential().Password)) {
         sudo ufw delete allow $port | Out-Null
     } else {
         Write-Output $creds.GetNetworkCredential().Password | sudo -S ufw delete allow $port | Out-Null
@@ -54,7 +59,12 @@ $ScriptBlockCleanupFirewallRules = {
 
 $ScriptBlockEnableFirewallRules = {
     param ($port, $creds)
-    if ([String]::IsNullOrWhiteSpace($creds.GetNetworkCredential().Password)) {
+
+    $hasUfw = $(dpkg --get-selections | grep ufw)
+    if ($null -eq $hasUfw) {
+        Write-Host 'Ufw is not installed'
+    }
+    elseif ([String]::IsNullOrWhiteSpace($creds.GetNetworkCredential().Password)) {
         sudo ufw allow $port | Out-Null
     } else {
         Write-Output $creds.GetNetworkCredential().Password | sudo -S ufw allow $port | Out-Null
