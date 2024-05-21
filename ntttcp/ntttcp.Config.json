@@ -57,5 +57,25 @@
         "Runtime"     : 10,
         "RecvOptions" : "-e",
         "SendOptions" : ""
+    },
+
+    "NtttcpContainer": {
+        "Iterations"  : 6,
+        "StartPort"   : 50000,
+        "tcp" : {
+            "BufferLen"   : [65536],
+            "Connections" : [64],
+            "Options"     : ""
+        },
+        "udp" : {
+            "BufferLen"   : [1472],
+            "Connections" : [64],
+            "Options"     : ""
+        },
+        "Warmup"      : 2,
+        "Cooldown"    : 2,
+        "Runtime"     : 60,
+        "RecvOptions" : "",
+        "SendOptions" : ""
     }
 }

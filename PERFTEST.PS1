@@ -9,7 +9,7 @@ Param(
     [parameter(Mandatory=$true)] [ValidateScript({-Not [String]::IsNullOrWhiteSpace($_)})] [string] $DestUserName,
     [parameter(Mandatory=$true)] [ValidateScript({-Not [String]::IsNullOrWhiteSpace($_)})] [string] $SrcUserName,
     [parameter(Mandatory=$true)] [ValidateScript({-Not [String]::IsNullOrWhiteSpace($_)})] [string] $TestUserName,
-    [parameter(Mandatory=$false)] [Array] $ToolList = @('ntttcp', 'lagscope', 'ncps')
+    [parameter(Mandatory=$false)] [Array] $ToolList = @('ntttcp', 'lagscope', 'ncps', 'secnetperf', 'l4ping')
 )
 $scriptName = $MyInvocation.MyCommand.Name 
 
@@ -100,7 +100,7 @@ function test_main {
         [parameter(Mandatory=$true)] [ValidateScript({-Not [String]::IsNullOrWhiteSpace($_)})] [string] $DestUserName,
         [parameter(Mandatory=$true)] [ValidateScript({-Not [String]::IsNullOrWhiteSpace($_)})] [string] $SrcUserName,
         [parameter(Mandatory=$true)] [ValidateScript({-Not [String]::IsNullOrWhiteSpace($_)})] [string] $TestUserName,
-        [parameter(Mandatory=$false)] [Array] $ToolList = @('ntttcp', 'lagscope', 'ncps')
+        [parameter(Mandatory=$false)] [Array] $ToolList = @('ntttcp', 'lagscope', 'ncps', 'secnetperf', 'l4ping')
     )
     Clear-Host
     input_display
@@ -134,5 +134,11 @@ function test_main {
     }
     if ('ncps' -in $ToolList) {
         & "$PSScriptRoot/ncps/ncps.TESTGEN.ps1" -DestIp $g_DestIp -SrcIp $g_SrcIp -OutDir $workDir -Config $g_config -DestDir $DestDir -SrcDir $SrcDir
+    }
+    if ('secnetperf' -in $ToolList) {
+        & "$PSScriptRoot/secnetperf/secnetperf.TESTGEN.ps1" -DestIp $g_DestIp -SrcIp $g_SrcIp -OutDir $workDir -Config $g_config -DestDir $DestDir -SrcDir $SrcDir
+    }
+    if ('l4ping' -in $ToolList) {
+        & "$PSScriptRoot/l4ping/l4ping.TESTGEN.ps1" -DestIp $g_DestIp -SrcIp $g_SrcIp -OutDir $workDir -Config $g_config -DestDir $DestDir -SrcDir $SrcDir
     }
     } test_main @PSBoundParameters # Entry Point
