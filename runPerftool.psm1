@@ -32,6 +32,19 @@ Param ([Int]$AdditionalTimeout, [string] $Line)
         }
        catch {}
     }
+    elseif ($Line -match "secnetperf") {
+        try {
+            $runtime = 0
+            if ($Line.Contains("-run")) {
+                [Int] $runtime = [Int]($Line.Substring($Line.IndexOf("-run")).Split(" ")[0].Split(":")[1]) / 1000
+            } else {
+                [Int] $runtime = [Int]($Line.Substring($Line.IndexOf("-up")).Split(" ")[0].Split(":")[1]) / 1000
+                $runtime += [Int]($Line.Substring($Line.IndexOf("-down")).Split(" ")[0].Split(":")[1]) / 1000
+            }
+            return $runtime
+        }
+        catch {}
+    }
     return $timeout
 }
 #===============================================
@@ -295,6 +308,16 @@ Function ProcessCommands{
         LogWrite "Processing ncps commands for Linux" $true
         ProcessToolCommands -PassAuth $PassAuth -RecvKeyFilePath $DestIpKeyFile -SendKeyFilePath $SrcIpKeyFile -Toolname "ncps" -RecvComputerName $recvComputerName -RecvComputerCreds $recvIPCreds -SendComputerName $sendComputerName -SendComputerCreds $sendIPCreds -TestUserName $TestUserName -CommandsDir $CommandsDir -Bcleanup $Bcleanup -BZip $ZipResults -TimeoutValueBetweenCommandPairs $TimeoutValueInSeconds -PollTimeInSeconds $PollTimeInSeconds -ListeningPort $ListeningPort -FirewallPortMin $FirewallPortMin -FirewallPortMax $FirewallPortMax -RecvDir $recvDir -SendDir $sendDir
     }
+
+    if (Test-Path -Path "$commandsDir\secnetperf") {
+        LogWrite "Processing secnetperf commands for Linux" $true
+        ProcessToolCommands -PassAuth $PassAuth -RecvKeyFilePath $DestIpKeyFile -SendKeyFilePath $SrcIpKeyFile -Toolname "secnetperf" -RecvComputerName $recvComputerName -RecvComputerCreds $recvIPCreds -SendComputerName $sendComputerName -SendComputerCreds $sendIPCreds -TestUserName $TestUserName -CommandsDir $CommandsDir -Bcleanup $Bcleanup -BZip $ZipResults -TimeoutValueBetweenCommandPairs $TimeoutValueInSeconds -PollTimeInSeconds $PollTimeInSeconds -ListeningPort $ListeningPort -FirewallPortMin $FirewallPortMin -FirewallPortMax $FirewallPortMax -RecvDir $recvDir -SendDir $sendDir
+    }
+
+    if (Test-Path -Path "$commandsDir\l4ping") {
+        LogWrite "Processing l4ping commands for Linux" $true
+        ProcessToolCommands -PassAuth $PassAuth -RecvKeyFilePath $DestIpKeyFile -SendKeyFilePath $SrcIpKeyFile -Toolname "l4ping" -RecvComputerName $recvComputerName -RecvComputerCreds $recvIPCreds -SendComputerName $sendComputerName -SendComputerCreds $sendIPCreds -TestUserName $TestUserName -CommandsDir $CommandsDir -Bcleanup $Bcleanup -BZip $ZipResults -TimeoutValueBetweenCommandPairs $TimeoutValueInSeconds -PollTimeInSeconds $PollTimeInSeconds -ListeningPort $ListeningPort -FirewallPortMin $FirewallPortMin -FirewallPortMax $FirewallPortMax -RecvDir $recvDir -SendDir $sendDir
+    }
     LogWrite "ProcessCommands Done!" $true
     Move-Item -Force -Path $Logfile -Destination "$CommandsDir" -ErrorAction Ignore
 
@@ -533,7 +556,7 @@ Function ProcessToolCommands{
                 # check job status until job is done running
                 while (([math]::Round($sw.Elapsed.TotalSeconds,0)) -lt $timeout) {
                     start-sleep -seconds $PollTimeInSeconds
-                    if ($Toolname -eq "lagscope") {
+                    if (($Toolname -eq "lagscope") -or ($Toolname -eq "secnetperf")) {
                         if ($sendJob.State -eq "Completed") {         
                             LogWrite "$Toolname exited on both Src machines after $([math]::Round($sw.Elapsed.TotalSeconds,0)) seconds"
                             break
