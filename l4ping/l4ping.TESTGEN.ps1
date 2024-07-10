@@ -5,7 +5,9 @@ Param(
     [parameter(Mandatory=$false)] [ValidateSet("Default", "Azure", "Detail", "Max", "Container")]   [string] $Config = "Default",
     [parameter(Mandatory=$true)]  [ValidateScript({$_ -match [IPAddress]$_ })]         [string] $DestIp,
     [parameter(Mandatory=$true)]  [ValidateScript({$_ -match [IPAddress]$_ })]         [string] $SrcIp,
-    [parameter(Mandatory=$true)]  [ValidateScript({Test-Path $_ -PathType Container})] [String] $OutDir
+    [parameter(Mandatory=$true)]  [ValidateScript({Test-Path $_ -PathType Container})] [String] $OutDir,
+    [parameter(Mandatory=$true)]  [string] $DestDir,
+    [parameter(Mandatory=$true)]  [string] $SrcDir
 )
 $scriptName = $MyInvocation.MyCommand.Name 
 
