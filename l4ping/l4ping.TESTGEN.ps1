@@ -150,7 +150,9 @@ function test_main {
         [parameter(Mandatory=$false)] [string] $Config = "Default",
         [parameter(Mandatory=$true)]  [string] $DestIp,
         [parameter(Mandatory=$true)]  [string] $SrcIp,
-        [parameter(Mandatory=$true)]  [ValidateScript({Test-Path $_ -PathType Container})] [String] $OutDir = "" 
+        [parameter(Mandatory=$true)]  [ValidateScript({Test-Path $_ -PathType Container})] [String] $OutDir = "",
+        [parameter(Mandatory=$true)]  [string] $DestDir,
+        [parameter(Mandatory=$true)]  [string] $SrcDir
     )
     try {
         # input_display
