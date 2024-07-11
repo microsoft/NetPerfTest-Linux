@@ -182,7 +182,7 @@ function test_main {
         # Optional - Edit spaces in output path for Invoke-Expression compatibility
         # $dir  = $dir  -replace ' ','` '
         banner -Msg "l4ping Tests"
-        test_l4ping_generate -OutDir $dir
+        test_l4ping_generate -OutDir $dir -SendDir $sendDir
     } catch {
         Write-Output "Unable to generate l4ping commands"
         Write-Output "Exception $($_.Exception.Message) in $($MyInvocation.MyCommand.Name)"

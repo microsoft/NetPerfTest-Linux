@@ -208,10 +208,10 @@ function test_secnetperf_generate {
         $send_dir = (Join-Path -Path $SendDir -ChildPath "latency") 
         New-Item -ItemType directory -Path $dir | Out-Null
         if ($null -ne $g_Config.TestType.Latency.tcp) {
-            test_latency -dir $OutDir -Proto 'tcp' -SendDir $send_dir
+            test_latency -OutDir $OutDir -Proto 'tcp' -SendDir $send_dir
         }
         if ($null -ne $g_Config.TestType.Latency.quic) {
-            test_latency -dir $OutDir -Proto 'quic' -SendDir $send_dir
+            test_latency -OutDir $OutDir -Proto 'quic' -SendDir $send_dir
         }
     }
 
