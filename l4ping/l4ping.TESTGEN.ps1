@@ -172,9 +172,9 @@ function test_main {
         [string] $g_DestIp     = $DestIp.Trim()
         [string] $g_SrcIp      = $SrcIp.Trim()
         [string] $dir          = (Join-Path -Path $OutDir -ChildPath "l4ping") 
-        [string] $g_log        = "$dir\l4ping.Commands.txt"
-        [string] $g_logSend    = "$dir\l4ping.Commands.Send.txt"
-        [string] $g_logRecv    = "$dir\l4ping.Commands.Recv.txt"
+        [string] $g_log        = "$dir\L4PING.Commands.txt"
+        [string] $g_logSend    = "$dir\L4PING.Commands.Send.txt"
+        [string] $g_logRecv    = "$dir\L4PING.Commands.Recv.txt"
 
         New-Item -ItemType directory -Path $dir | Out-Null
         [string] $sendDir   = (Join-Path -Path $SrcDir -ChildPath "l4ping")
