@@ -180,7 +180,7 @@ function test_throughput {
     $dir = (Join-Path -Path $OutDir -ChildPath $Proto) 
     $send_dir = (Join-Path -Path $SendDir -ChildPath $Proto) 
     New-Item -ItemType directory -Path $dir | Out-Null
-    $Config = $g_Config.TestType.Handshakes.$Proto
+    $Config = $g_Config.TestType.Throughput.$Proto
     for ($j=0; $j -lt $Config.Connections.Length; $j++) {
         $Conn = $Config.Connections[$j]
         for ($k=0; $k -lt $Config.BufferLen.Length; $k++) {
