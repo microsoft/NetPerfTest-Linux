@@ -113,7 +113,7 @@ function test_send_throughput {
 
     [string] $out = (Join-Path -Path $SendDir -ChildPath "$Fname")
 
-    [string] $cmd = "./secnetperf -target:$SrcIp -port:$Port -tcp:$Type -iosize:$Len :$Conns -up:$($Secs)s -down:$($Secs)s -exec:maxtput -ptput:1 $Options > $out.txt"
+    [string] $cmd = "./secnetperf -target:$SrcIp -port:$Port -tcp:$Type -iosize:$Len -conns:$Conns -up:$($Secs)s -down:$($Secs)s -exec:maxtput -ptput:1 $Options > $out.txt"
     [string] $cmdOut = (Join-Path -Path $OutDir -ChildPath "$Fname")
     Write-Output $cmd | Out-File -Encoding ascii -Append "$cmdOut.txt"
     Write-Output $cmd | Out-File -Encoding ascii -Append $g_log

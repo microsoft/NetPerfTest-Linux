@@ -509,11 +509,13 @@ Function ProcessToolCommands{
             Copy-Item -Path "$toolpath/$Toolname" -Destination "$SendDir/Sender/$Toolname" -ToSession $sendPSSession
             
             if ($Toolname -eq 'ncps') {
-                Copy-Item -Path "$toolpath/vcruntime140.dll" -Destination "$RecvDir/Receiver/$Toolname" -ToSession $recvPSSession
-                Copy-Item -Path "$toolpath/vcruntime140.dll" -Destination "$SendDir/Sender/$Toolname" -ToSession $sendPSSession
+                Copy-Item -Path "$toolpath/vcruntime140.dll" -Destination "/usr/local/lib" -ToSession $recvPSSession
+                Copy-Item -Path "$toolpath/vcruntime140.dll" -Destination "/usr/local/lib" -ToSession $sendPSSession
             } elseif ($Toolname -eq 'secnetperf') {
                 Copy-Item -Path "$toolpath/libmsquic.so.2" -Destination "$RecvDir/Receiver/$Toolname" -ToSession $recvPSSession
                 Copy-Item -Path "$toolpath/libmsquic.so.2" -Destination "$SendDir/Sender/$Toolname" -ToSession $sendPSSession
+                Invoke-Command -Session $sendPSSession -ScriptBlock ([Scriptblock]::Create("ldconfig")) -AsJob 
+                Invoke-Command -Session $recvPSSession -ScriptBlock ([Scriptblock]::Create("ldconfig")) -AsJob 
             }
 
             # Enable execution of tool binaries 
