@@ -56,6 +56,16 @@ $ScriptBlockEnableToolPermissions = {
     chmod 777 $remoteToolPath
 } # $ScriptBlockEnableToolPermissions()
 
+$ScriptBlockMoveLibrary = {
+    param ($remoteToolPath, $creds)
+    if ([String]::IsNullOrWhiteSpace($creds.GetNetworkCredential().Password)) {
+        sudo mv $remoteToolPath /usr/local/lib
+    } else {
+        Write-Output $creds.GetNetworkCredential().Password | mv $remoteToolPath /usr/local/lib
+    }
+    sudo ldconfig
+} # $ScriptBlockMoveLibrary()
+
 $ScriptBlockCleanupFirewallRules = {
     param($port, $creds)
     
@@ -512,10 +522,10 @@ Function ProcessToolCommands{
                 Copy-Item -Path "$toolpath/vcruntime140.dll" -Destination "$RecvDir/Receiver/$Toolname" -ToSession $recvPSSession
                 Copy-Item -Path "$toolpath/vcruntime140.dll" -Destination "$SendDir/Sender/$Toolname" -ToSession $sendPSSession
             } elseif ($Toolname -eq 'secnetperf') {
-                Copy-Item -Path "$toolpath/libmsquic.so.2" -Destination "/usr/local/lib" -ToSession $recvPSSession
-                Copy-Item -Path "$toolpath/libmsquic.so.2" -Destination "/usr/local/lib" -ToSession $sendPSSession
-                Invoke-Command -Session $sendPSSession -ScriptBlock ([Scriptblock]::Create("ldconfig"))
-                Invoke-Command -Session $recvPSSession -ScriptBlock ([Scriptblock]::Create("ldconfig"))
+                Copy-Item -Path "$toolpath/libmsquic.so.2" -Destination "$RecvDir/Receiver/$Toolname" -ToSession $recvPSSession
+                Copy-Item -Path "$toolpath/libmsquic.so.2" -Destination "$SendDir/Sender/$Toolname" -ToSession $sendPSSession
+                Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockMoveLibrary -ArgumentList ("$RecvDir/Receiver/$Toolname/libmsquic.so.2", $RecvComputerCreds)
+                Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockMoveLibrary -ArgumentList ("$SendDir/Sender/$Toolname/libmsquic.so.2", $SendComputerCreds)
             }
 
             # Enable execution of tool binaries 

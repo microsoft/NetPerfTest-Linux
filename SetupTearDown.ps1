@@ -63,6 +63,9 @@ Function SetupRemoting{
     Copy-Item -Path "./ncps/rc.local" -Destination "/etc/rc.local"
     echo "`n*   soft    nofile  1048575 `n*   hard    nofile  1048575 " >> /etc/security/limits.conf
     chmod +x /etc/rc.local
+
+    Copy-Item -Path './secnetperf/libmsquic.so.2' -Destination '/usr/local/lib'
+    ldconfig
 } # SetupRemoting()
 
 
