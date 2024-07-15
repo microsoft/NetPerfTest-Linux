@@ -230,7 +230,7 @@ function test_secnetperf_generate {
 
     if ($null -ne $g_Config.TestType.Throughput) {
         $dir = (Join-Path -Path $OutDir -ChildPath "throughput") 
-        $send_dir = (Join-Path -Path $SendDir -ChildPath "handshakes") 
+        $send_dir = (Join-Path -Path $SendDir -ChildPath "throughput") 
         New-Item -ItemType directory -Path $dir | Out-Null
         if ($null -ne $g_Config.TestType.Throughput.tcp) {
             test_throughput -OutDir $dir -Proto 'tcp' -SendDir $send_dir 
