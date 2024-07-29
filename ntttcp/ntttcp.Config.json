@@ -94,7 +94,7 @@
         "Warmup"      : 2,
         "Cooldown"    : 2,
         "Runtime"     : 60,
-        "RecvOptions" : "-6",
-        "SendOptions" : "-6"
+        "RecvOptions" : "",
+        "SendOptions" : ""
     }
 }
