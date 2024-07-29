@@ -77,5 +77,24 @@
         "Runtime"     : 60,
         "RecvOptions" : "",
         "SendOptions" : ""
+    },
+     "NtttcpIPv6": {
+        "Iterations"  : 6,
+        "StartPort"   : 50000,
+        "tcp" : {
+            "BufferLen"   : [65536],
+            "Connections" : [64],
+            "Options"     : "-6"
+        },
+        "udp" : {
+            "BufferLen"   : [1472],
+            "Connections" : [64],
+            "Options"     : "-6"
+        },
+        "Warmup"      : 2,
+        "Cooldown"    : 2,
+        "Runtime"     : 60,
+        "RecvOptions" : "",
+        "SendOptions" : ""
     }
 }
