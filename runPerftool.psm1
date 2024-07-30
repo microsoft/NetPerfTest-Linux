@@ -483,7 +483,7 @@ Function ProcessToolCommands{
     
             # Establish the Remote PS session with Sender
             if ($SendComputerName.Contains(":")) {
-                $RecvComputerName = "[$RecvComputerName]"
+                $SendComputerName = "[$SendComputerName]"
             }
             $sendPSSession = New-PSSession -Port $ListeningPort -HostName $SendComputerName -UserName $SendComputerCreds.GetNetworkCredential().UserName -KeyFilePath $SendKeyFilePath
         
