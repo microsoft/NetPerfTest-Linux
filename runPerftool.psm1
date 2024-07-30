@@ -470,6 +470,10 @@ Function ProcessToolCommands{
                 $SendKeyFilePath = $keyFilePath
                 $RecvKeyFilePath = $keyFilePath
             }
+            #add [] to addresses if they are ipv6
+            if ($RecvComputerName.Contains(":")) {
+                $RecvComputerName = "[$RecvComputerName]"
+            }
             $recvPSSession = New-PSSession -Port $ListeningPort -HostName $RecvComputerName -UserName ($RecvComputerCreds.GetNetworkCredential().UserName) -KeyFilePath $RecvKeyFilePath
     
             if($null -eq $recvPSsession) {
@@ -478,6 +482,9 @@ Function ProcessToolCommands{
             }
     
             # Establish the Remote PS session with Sender
+            if ($SendComputerName.Contains(":")) {
+                $RecvComputerName = "[$RecvComputerName]"
+            }
             $sendPSSession = New-PSSession -Port $ListeningPort -HostName $SendComputerName -UserName $SendComputerCreds.GetNetworkCredential().UserName -KeyFilePath $SendKeyFilePath
         
             if($null -eq $sendPSsession) {
