@@ -524,12 +524,12 @@ Function ProcessToolCommands{
             } elseif ($Toolname -eq 'secnetperf') {
                 Copy-Item -Path "$toolpath/libmsquic.so.2" -Destination "$RecvDir/Receiver/$Toolname" -ToSession $recvPSSession
                 Copy-Item -Path "$toolpath/libmsquic.so.2" -Destination "$SendDir/Sender/$Toolname" -ToSession $sendPSSession
-                Invoke-Command -Session $recvPSSession -ScriptBlock ([Scriptblock]::Create("`$env:LD_LIBRARY_PATH = Join-Path $RecvDir/Receiver/$Toolname/libmsquic.so.2"))
-                Invoke-Command -Session $sendPSSession -ScriptBlock ([Scriptblock]::Create("`$env:LD_LIBRARY_PATH = Join-Path $SendDir/Sender/$Toolname/libmsquic.so.2"))
-                Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockEnableFirewallRules -ArgumentList ("4433/tcp", $RecvComputerCreds)
-                Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockEnableFirewallRules -ArgumentList ("4433/tcp", $SendComputerCreds)
-                Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockEnableFirewallRules -ArgumentList ("4433/udp", $RecvComputerCreds)
-                Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockEnableFirewallRules -ArgumentList ("4433/udp", $SendComputerCreds)
+                Invoke-Command -Session $recvPSSession -ScriptBlock ([Scriptblock]::Create("`$env:LD_LIBRARY_PATH = $RecvDir/Receiver/$Toolname/libmsquic.so.2"))
+                Invoke-Command -Session $sendPSSession -ScriptBlock ([Scriptblock]::Create("`$env:LD_LIBRARY_PATH = $SendDir/Sender/$Toolname/libmsquic.so.2"))
+                # Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockEnableFirewallRules -ArgumentList ("4433/tcp", $RecvComputerCreds)
+                # Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockEnableFirewallRules -ArgumentList ("4433/tcp", $SendComputerCreds)
+                # Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockEnableFirewallRules -ArgumentList ("4433/udp", $RecvComputerCreds)
+                # Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockEnableFirewallRules -ArgumentList ("4433/udp", $SendComputerCreds)
                 # Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockMoveLibrary -ArgumentList ("$RecvDir/Receiver/$Toolname/libmsquic.so.2", $RecvComputerCreds)
                 # Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockMoveLibrary -ArgumentList ("$SendDir/Sender/$Toolname/libmsquic.so.2", $SendComputerCreds)
             }
