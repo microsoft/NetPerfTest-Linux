@@ -64,12 +64,12 @@
         "StartPort"   : 50000,
         "tcp" : {
             "BufferLen"   : [65536],
-            "Connections" : [64],
+            "Connections" : [64, 128],
             "Options"     : ""
         },
         "udp" : {
             "BufferLen"   : [1472],
-            "Connections" : [64],
+            "Connections" : [64, 128],
             "Options"     : ""
         },
         "Warmup"      : 2,
