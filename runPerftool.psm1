@@ -118,6 +118,16 @@ $ScriptBlockRemoveFileFolder = {
     Remove-Item -Force -Path "$Arg" -Recurse -ErrorAction SilentlyContinue
 } # $ScriptBlockRemoveFileFolder()
 
+# Delete file/folder on the remote machines 
+$ScriptBlockIsArm64 = {
+    param ()
+    $Output = uanme -m
+    if ($Output -contains 'aarch64') {
+        return $true
+    }
+    return $false
+} # $ScriptBlockIsArm64()
+
 
 # Delete the entire folder (if empty) on the remote machines
 $ScriptBlockRemoveFolderTree = {
@@ -520,6 +530,13 @@ Function ProcessToolCommands{
                 Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockCreateDirForResults -ArgumentList ($RecvDir+"/Receiver/$Toolname/udp")
                 Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockCreateDirForResults -ArgumentList ($SendDir+"/Sender/$Toolname/udp")
             }
+
+            $ArmRecv = Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockIsArm64
+            $ArmSend = Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockIsArm64
+
+            if ($ArmRecv -and $ArmSend) {
+                $toolpath = "./{0}/arm64" -f $Toolname
+            }
     
             # Copy the tool binaries to the remote machines
             Copy-Item -Path "$toolpath/$Toolname" -Destination "$RecvDir/Receiver/$Toolname" -ToSession $recvPSSession
@@ -533,12 +550,8 @@ Function ProcessToolCommands{
                 Copy-Item -Path "$toolpath/libmsquic.so.2" -Destination "$SendDir/Sender/$Toolname" -ToSession $sendPSSession
                 Invoke-Command -Session $recvPSSession -ScriptBlock ([Scriptblock]::Create("`$env:LD_LIBRARY_PATH = $RecvDir/Receiver/$Toolname/libmsquic.so.2"))
                 Invoke-Command -Session $sendPSSession -ScriptBlock ([Scriptblock]::Create("`$env:LD_LIBRARY_PATH = $SendDir/Sender/$Toolname/libmsquic.so.2"))
-                # Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockEnableFirewallRules -ArgumentList ("4433/tcp", $RecvComputerCreds)
-                # Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockEnableFirewallRules -ArgumentList ("4433/tcp", $SendComputerCreds)
-                # Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockEnableFirewallRules -ArgumentList ("4433/udp", $RecvComputerCreds)
-                # Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockEnableFirewallRules -ArgumentList ("4433/udp", $SendComputerCreds)
-                # Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockMoveLibrary -ArgumentList ("$RecvDir/Receiver/$Toolname/libmsquic.so.2", $RecvComputerCreds)
-                # Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockMoveLibrary -ArgumentList ("$SendDir/Sender/$Toolname/libmsquic.so.2", $SendComputerCreds)
+                Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockMoveLibrary -ArgumentList ("$RecvDir/Receiver/$Toolname/libmsquic.so.2", $RecvComputerCreds)
+                Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockMoveLibrary -ArgumentList ("$SendDir/Sender/$Toolname/libmsquic.so.2", $SendComputerCreds)
             }
 
             # Enable execution of tool binaries 
