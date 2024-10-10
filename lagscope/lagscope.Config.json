@@ -21,5 +21,13 @@
         "Time"           : 60,
         "PingIterations" : 20000,
         "Options"        : ""
+    },
+
+    "LagscopeContainer": {
+        "Iterations"     : 8,
+        "StartPort"      : 50002,
+        "Time"           : 0,
+        "PingIterations" : 20000,
+        "Options"        : ""
     }
 }
