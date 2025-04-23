@@ -66,7 +66,7 @@ function test_send_latency {
 
     [string] $out = (Join-Path -Path $SendDir -ChildPath "$Fname")
 
-    [string] $cmd = "./secnetperf -target:$DestIp -port:$Port -tcp:$Type -up:$Requests -down:$Size -run:$($Secs)s -rstream:1 -platency:1 $Options > $out.txt"
+    [string] $cmd = "./secnetperf -target:$DestIp -port:$Port -tcp:$Type -up:$Requests -down:$Size -runtime:$($Secs)s -rstream:1 -platency:1 $Options > $out.txt"
     [string] $cmdOut = (Join-Path -Path $OutDir -ChildPath "$Fname")
     Write-Output $cmd | Out-File -Encoding ascii -Append "$cmdOut.txt"
     Write-Output $cmd | Out-File -Encoding ascii -Append $g_log
@@ -89,7 +89,7 @@ function test_send_handshakes {
 
     [string] $out = (Join-Path -Path $SendDir -ChildPath "$Fname")
 
-    [string] $cmd = "./secnetperf -target:$DestIp -port:$Port -tcp:$Type -conns:$Conns -run:$($Secs)s -rconn:1 -exec:maxtput -scenario:hps -prate:1 $Options > $out.txt"
+    [string] $cmd = "./secnetperf -target:$DestIp -port:$Port -tcp:$Type -conns:$Conns -runtime:$($Secs)s -rconn:1 -exec:maxtput -scenario:hps -prate:1 $Options > $out.txt"
     [string] $cmdOut = (Join-Path -Path $OutDir -ChildPath "$Fname")
     Write-Output $cmd | Out-File -Encoding ascii -Append "$cmdOut.txt"
     Write-Output $cmd | Out-File -Encoding ascii -Append $g_log
@@ -112,7 +112,7 @@ function test_send_requests {
 
     [string] $out = (Join-Path -Path $SendDir -ChildPath "$Fname")
 
-    [string] $cmd = "./secnetperf -target:$DestIp -port:$Port -tcp:$Type -conns:$Conns -run:$($Secs)s -rconn:1 -exec:maxtput -scenario:rps -prate:1 $Options > $out.txt"
+    [string] $cmd = "./secnetperf -target:$DestIp -port:$Port -tcp:$Type -conns:$Conns -runtime:$($Secs)s -rconn:1 -exec:maxtput -scenario:rps -prate:1 $Options > $out.txt"
     [string] $cmdOut = (Join-Path -Path $OutDir -ChildPath "$Fname")
     Write-Output $cmd | Out-File -Encoding ascii -Append "$cmdOut.txt"
     Write-Output $cmd | Out-File -Encoding ascii -Append $g_log
