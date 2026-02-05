@@ -27,6 +27,17 @@ function input_display {
 #===============================================
 # Internal Functions
 #===============================================
+function is_iPv6 {
+    param(
+      [string]$IPAddress
+    )
+    $ipObj = $null
+    [IPAddress]::TryParse($IPAddress, [ref]$ipObj)
+    if ($ipObj -ne $null -and $ipObj.AddressFamily -eq "InterNetworkV6") {
+      return $true
+    }
+    return $false
+}
 function test_recv {
     [CmdletBinding()]
     Param(
@@ -38,9 +49,12 @@ function test_recv {
         [parameter(Mandatory=$true)]  [string] $RecvDir, 
         [parameter(Mandatory=$true)]   [Int]    $BufferLen
     )
+    if (is_iPv6 -IPAddress $g_DestIp) {
+        $ipv6 = ' -6'
+    }
 
     [string] $out = (Join-Path -Path $RecvDir -ChildPath "$Fname")
-    [string] $cmd = "./ntttcp -r -m  `"$Conn,*,$g_DestIp`" $Proto -V -b $BufferLen -W $($g_Config.Warmup) -C $($g_Config.Cooldown) -p $Port -t $($g_Config.Runtime) $($g_Config.RecvOptions) -x $out.xml > $out.txt"
+    [string] $cmd = "./ntttcp -r -m  `"$Conn,*,$g_DestIp`" $Proto -V$ipv6 -b $BufferLen -W $($g_Config.Warmup) -C $($g_Config.Cooldown) -p $Port -t $($g_Config.Runtime) $($g_Config.RecvOptions) -x $out.xml > $out.txt"
     [string] $cmdOut = (Join-Path -Path $OutDir -ChildPath "$Fname")
     Write-Output $cmd | Out-File -Encoding ascii -Append "$cmdOut.txt"
     Write-Output $cmd | Out-File -Encoding ascii -Append $g_log
@@ -60,9 +74,12 @@ function test_send {
         [parameter(Mandatory=$true)]  [string] $SendDir, 
         [parameter(Mandatory=$true)]   [Int]    $BufferLen    
     )
+    if (is_iPv6 -IPAddress $g_DestIp) {
+        $ipv6 = ' -6'
+    }
 
     [string] $out = (Join-Path -Path $SendDir -ChildPath "$Fname")
-    [string] $cmd = "./ntttcp -s -m `"$Conn,*,$g_DestIp`" $Proto -V -b $BufferLen -W $($g_Config.Warmup) -C $($g_Config.Cooldown) -p $Port -t $($g_Config.Runtime) $($g_Config.SendOptions) -x $out.xml > $out.txt"
+    [string] $cmd = "./ntttcp -s -m `"$Conn,*,$g_DestIp`" $Proto -V$ipv6 -b $BufferLen -W $($g_Config.Warmup) -C $($g_Config.Cooldown) -p $Port -t $($g_Config.Runtime) $($g_Config.SendOptions) -x $out.xml > $out.txt"
     [string] $cmdOut = (Join-Path -Path $OutDir -ChildPath "$Fname")
     Write-Output $cmd | Out-File -Encoding ascii -Append "$cmdOut.txt"
     Write-Output $cmd | Out-File -Encoding ascii -Append $g_log

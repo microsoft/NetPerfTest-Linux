@@ -66,7 +66,7 @@ function test_send_latency {
 
     [string] $out = (Join-Path -Path $SendDir -ChildPath "$Fname")
 
-    [string] $cmd = "./secnetperf -target:$DestIp -port:$Port -tcp:$Type -up:$Requests -down:$Size -run:$($Secs)s -rstream:1 -platency:1 $Options > $out.txt"
+    [string] $cmd = "./secnetperf -target:$DestIp -port:$Port -tcp:$Type -up:$Requests -down:$Size -runtime:$($Secs)s -rstream:1 -platency:1 $Options > $out.txt"
     [string] $cmdOut = (Join-Path -Path $OutDir -ChildPath "$Fname")
     Write-Output $cmd | Out-File -Encoding ascii -Append "$cmdOut.txt"
     Write-Output $cmd | Out-File -Encoding ascii -Append $g_log
@@ -89,13 +89,36 @@ function test_send_handshakes {
 
     [string] $out = (Join-Path -Path $SendDir -ChildPath "$Fname")
 
-    [string] $cmd = "./secnetperf -target:$DestIp -port:$Port -tcp:$Type -conns:$Conns -run:$($Secs)s -rconn:1 -exec:maxtput -prate:1 $Options > $out.txt"
+    [string] $cmd = "./secnetperf -target:$DestIp -port:$Port -tcp:$Type -conns:$Conns -runtime:$($Secs)s -rconn:1 -exec:maxtput -scenario:hps -prate:1 $Options > $out.txt"
     [string] $cmdOut = (Join-Path -Path $OutDir -ChildPath "$Fname")
     Write-Output $cmd | Out-File -Encoding ascii -Append "$cmdOut.txt"
     Write-Output $cmd | Out-File -Encoding ascii -Append $g_log
     Write-Output $cmd | Out-File -Encoding ascii -Append $g_logSend
     Write-Output   $cmd 
 } # test_send_handshakes()
+
+function test_send_requests {
+    [CmdletBinding()]
+    Param(
+        [parameter(Mandatory=$false)]  [int]    $Secs,
+        [parameter(Mandatory=$true)]   [int]    $Port,
+        [parameter(Mandatory=$true)]   [String] $Type,
+        [parameter(Mandatory=$true)]   [int]    $Conns,
+        [parameter(Mandatory=$false)]  [String] $Options,
+        [parameter(Mandatory=$true)]   [String] $OutDir,
+        [parameter(Mandatory=$true)]   [String] $Fname,
+        [parameter(Mandatory=$true)]  [string] $SendDir
+    )
+
+    [string] $out = (Join-Path -Path $SendDir -ChildPath "$Fname")
+
+    [string] $cmd = "./secnetperf -target:$DestIp -port:$Port -tcp:$Type -conns:$Conns -runtime:$($Secs)s -rconn:1 -exec:maxtput -scenario:rps -prate:1 $Options > $out.txt"
+    [string] $cmdOut = (Join-Path -Path $OutDir -ChildPath "$Fname")
+    Write-Output $cmd | Out-File -Encoding ascii -Append "$cmdOut.txt"
+    Write-Output $cmd | Out-File -Encoding ascii -Append $g_log
+    Write-Output $cmd | Out-File -Encoding ascii -Append $g_logSend
+    Write-Output   $cmd 
+} # test_send_requests()
 
 function test_send_throughput {
     [CmdletBinding()]
@@ -168,6 +191,31 @@ function test_handshakes {
     }
 }
 
+function test_requests {
+    [CmdletBinding()]
+    Param(
+        [parameter(Mandatory=$false)] [String] $OutDir,
+        [parameter(Mandatory=$true)] [String] $Proto,
+        [parameter(Mandatory=$true)]  [string] $SendDir
+    )
+    # vary send method
+    $protoParam = if ($Proto -eq "tcp") {"1"} else {"0"};
+    $dir = (Join-Path -Path $OutDir -ChildPath $Proto) 
+    $send_dir = (Join-Path -Path $SendDir -ChildPath $Proto) 
+    New-Item -ItemType directory -Path $dir | Out-Null
+    $Config = $g_Config.TestType.Requests.$Proto
+    for ($j=0; $j -lt $Config.Connections.Length; $j++) {
+        $Conn = $Config.Connections[$j]
+        $Fname = "m$Conn"
+        for ($i=0; $i -lt $g_Config.Iterations; $i++) {
+            # vary on port number
+            [int] $portstart = $g_Config.StartPort + ($i * $g_Config.Iterations)
+            test_recv -Port $portstart -Exec 'maxtput'
+            test_send_requests -Port $portstart -Secs $Config.Runtime -Conns $Conn -Type $protoParam -OutDir $dir -Fname "$Proto.send.$Fname.iter$i" -Options $Options -SendDir $send_dir
+        }
+    }
+}
+
 function test_throughput {
     [CmdletBinding()]
     Param(
@@ -228,6 +276,19 @@ function test_secnetperf_generate {
         }
     }
 
+    if ($null -ne $g_Config.TestType.Requests) {
+        # latency directory
+        $dir = (Join-Path -Path $OutDir -ChildPath "requests") 
+        $send_dir = (Join-Path -Path $SendDir -ChildPath "requests") 
+        New-Item -ItemType directory -Path $dir | Out-Null
+        if ($null -ne $g_Config.TestType.Requests.tcp) {
+            test_requests -OutDir $dir -Proto 'tcp' -SendDir $send_dir
+        }
+        if ($null -ne $g_Config.TestType.Requests.quic) {
+            test_requests -OutDir $dir -Proto 'quic' -SendDir $send_dir
+        }
+    }
+
     if ($null -ne $g_Config.TestType.Throughput) {
         $dir = (Join-Path -Path $OutDir -ChildPath "throughput") 
         $send_dir = (Join-Path -Path $SendDir -ChildPath "throughput") 
@@ -272,6 +333,28 @@ function validate_config {
                     $isValid = $false
                 }
                 $arr = $g_Config.TestType.Handshakes.$proto.Connections
+                if (($null -eq $arr) -or ($arr.length -le 0)) {
+                    Write-Output "$var is required and must have at least 1 item"
+                    $isValid = $false
+                } else {
+                    foreach ($num in $arr) {
+                        if ($num -le 0) {
+                            Write-Output "$num in Connections is required to be greater than 0"
+                            $isValid = $false
+                        }
+                    }
+                }
+            }
+        }
+    }
+    if ($null -ne $g_Config.TestType.Requests) {
+        foreach ($proto in $valid_protocols) {
+            if ($null -ne $g_Config.TestType.Requests.$proto) {
+                if (($null -eq $g_Config.TestType.Requests.$proto.Runtime) -or ($g_Config.TestType.Requests.$proto.Runtime -le 0)) {
+                    Write-Output "Runtime is required to be greater than 0 if $proto is present "
+                    $isValid = $false
+                }
+                $arr = $g_Config.TestType.Requests.$proto.Connections
                 if (($null -eq $arr) -or ($arr.length -le 0)) {
                     Write-Output "$var is required and must have at least 1 item"
                     $isValid = $false

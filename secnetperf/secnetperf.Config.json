@@ -29,6 +29,18 @@
                     "Options" : ""
                 }
             },
+            "Requests": {
+                "tcp": {
+                    "Runtime" : 10,
+                    "Connections": [1, 64],
+                    "Options" : ""
+                },
+                "quic": {
+                    "Runtime" : 10,
+                    "Connections": [1, 64],
+                    "Options" : ""
+                }
+            },
             "Throughput": {
                 "tcp": {
                     "Runtime" : 10,
@@ -75,6 +87,18 @@
                     "Options" : ""
                 }
             },
+            "Requests": {
+                "tcp": {
+                    "Runtime" : 60,
+                    "Connections": [1, 64],
+                    "Options" : ""
+                },
+                "quic": {
+                    "Runtime" : 60,
+                    "Connections": [1, 64],
+                    "Options" : ""
+                }
+            },
             "Throughput": {
                 "tcp": {
                     "Runtime" : 60,
@@ -110,6 +134,18 @@
                 }
             },
             "Handshakes": {
+                "tcp": {
+                    "Runtime" : 60,
+                    "Connections": [1, 64],
+                    "Options" : ""
+                },
+                "quic": {
+                    "Runtime" : 60,
+                    "Connections": [1, 64],
+                    "Options" : ""
+                }
+            },
+            "Requests": {
                 "tcp": {
                     "Runtime" : 60,
                     "Connections": [1, 64],
