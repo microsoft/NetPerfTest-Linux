@@ -102,7 +102,7 @@ function test_main {
         [parameter(Mandatory=$true)] [ValidateScript({-Not [String]::IsNullOrWhiteSpace($_)})] [string] $TestUserName,
         [parameter(Mandatory=$false)] [Array] $ToolList = @('ntttcp', 'lagscope', 'ncps', 'secnetperf', 'l4ping')
     )
-    Clear-Host
+    Clear-Host 2>$null
     input_display
 
     $start   = Get-Date
