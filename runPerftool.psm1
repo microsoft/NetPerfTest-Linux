@@ -69,7 +69,7 @@ $ScriptBlockMoveLibrary = {
 $ScriptBlockCleanupFirewallRules = {
     param($port, $creds)
     
-    $hasUfw = $(dpkg --get-selections | grep ufw)
+    $hasUfw = $(/usr/bin/dpkg --get-selections 2>$null | grep ufw)
     if ($null -eq $hasUfw) {
         Write-Host 'Ufw is not installed'
     }
@@ -83,7 +83,7 @@ $ScriptBlockCleanupFirewallRules = {
 $ScriptBlockEnableFirewallRules = {
     param ($port, $creds)
 
-    $hasUfw = $(dpkg --get-selections | grep ufw)
+    $hasUfw = $(/usr/bin/dpkg --get-selections 2>$null | grep ufw)
     if ($null -eq $hasUfw) {
         Write-Host 'Ufw is not installed'
     }
@@ -121,7 +121,7 @@ $ScriptBlockRemoveFileFolder = {
 # Delete file/folder on the remote machines 
 $ScriptBlockIsArm64 = {
     param ()
-    $Output = uanme -m
+    $Output = uname -m
     if ($Output -contains 'aarch64') {
         return $true
     }
@@ -548,8 +548,8 @@ Function ProcessToolCommands{
             } elseif ($Toolname -eq 'secnetperf') {
                 Copy-Item -Path "$toolpath/libmsquic.so.2" -Destination "$RecvDir/Receiver/$Toolname" -ToSession $recvPSSession
                 Copy-Item -Path "$toolpath/libmsquic.so.2" -Destination "$SendDir/Sender/$Toolname" -ToSession $sendPSSession
-                Invoke-Command -Session $recvPSSession -ScriptBlock ([Scriptblock]::Create("`$env:LD_LIBRARY_PATH = $RecvDir/Receiver/$Toolname/libmsquic.so.2"))
-                Invoke-Command -Session $sendPSSession -ScriptBlock ([Scriptblock]::Create("`$env:LD_LIBRARY_PATH = $SendDir/Sender/$Toolname/libmsquic.so.2"))
+                Invoke-Command -Session $recvPSSession -ScriptBlock ([Scriptblock]::Create("`$env:LD_LIBRARY_PATH = $RecvDir/Receiver/$Toolname"))
+                Invoke-Command -Session $sendPSSession -ScriptBlock ([Scriptblock]::Create("`$env:LD_LIBRARY_PATH = $SendDir/Sender/$Toolname"))
                 Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockMoveLibrary -ArgumentList ("$RecvDir/Receiver/$Toolname/libmsquic.so.2", $RecvComputerCreds)
                 Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockMoveLibrary -ArgumentList ("$SendDir/Sender/$Toolname/libmsquic.so.2", $SendComputerCreds)
             }
