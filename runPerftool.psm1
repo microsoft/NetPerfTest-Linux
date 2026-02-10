@@ -69,7 +69,10 @@ $ScriptBlockMoveLibrary = {
 $ScriptBlockCleanupFirewallRules = {
     param($port, $creds)
     
-    $hasUfw = $(/usr/bin/dpkg --get-selections 2>$null | grep ufw)
+    $hasUfw = $null
+    if (Test-Path '/usr/bin/dpkg') {
+        $hasUfw = $(/usr/bin/dpkg --get-selections 2>$null | grep ufw)
+    }
     if ($null -eq $hasUfw) {
         Write-Host 'Ufw is not installed'
     }
@@ -83,7 +86,10 @@ $ScriptBlockCleanupFirewallRules = {
 $ScriptBlockEnableFirewallRules = {
     param ($port, $creds)
 
-    $hasUfw = $(/usr/bin/dpkg --get-selections 2>$null | grep ufw)
+    $hasUfw = $null
+    if (Test-Path '/usr/bin/dpkg') {
+        $hasUfw = $(/usr/bin/dpkg --get-selections 2>$null | grep ufw)
+    }
     if ($null -eq $hasUfw) {
         Write-Host 'Ufw is not installed'
     }
