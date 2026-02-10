@@ -32,7 +32,7 @@ function is_iPv6 {
       [string]$IPAddress
     )
     $ipObj = $null
-    [IPAddress]::TryParse($IPAddress, [ref]$ipObj)
+    [IPAddress]::TryParse($IPAddress, [ref]$ipObj) | Out-Null
     if ($ipObj -ne $null -and $ipObj.AddressFamily -eq "InterNetworkV6") {
       return $true
     }
@@ -51,6 +51,8 @@ function test_recv {
     )
     if (is_iPv6 -IPAddress $g_DestIp) {
         $ipv6 = ' -6'
+    } else {
+        $ipv6 = ''
     }
 
     [string] $out = (Join-Path -Path $RecvDir -ChildPath "$Fname")
@@ -76,6 +78,8 @@ function test_send {
     )
     if (is_iPv6 -IPAddress $g_DestIp) {
         $ipv6 = ' -6'
+    } else {
+        $ipv6 = ''
     }
 
     [string] $out = (Join-Path -Path $SendDir -ChildPath "$Fname")
