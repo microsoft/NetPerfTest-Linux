@@ -674,7 +674,9 @@ Function ProcessToolCommands{
                 Remove-Item -Force -Path ("{0}/{1}_Sender" -f $CommandsDir, $Toolname) -Recurse -ErrorAction SilentlyContinue
     
                 #copy just the entire results folder from remote machines to the current (orchestrator) machine
-                Copy-Item -Path "$RecvDir/Receiver/$Toolname/" -Recurse -Destination ("{0}/{1}_Receiver" -f $CommandsDir, $Toolname) -FromSession $recvPSSession -Force
+                if ($Toolname -ne 'secnetperf') {
+                    Copy-Item -Path "$RecvDir/Receiver/$Toolname/" -Recurse -Destination ("{0}/{1}_Receiver" -f $CommandsDir, $Toolname) -FromSession $recvPSSession -Force
+                }
                 Copy-Item -Path "$SendDir/Sender/$Toolname/" -Recurse -Destination ("{0}/{1}_Sender" -f $CommandsDir, $Toolname) -FromSession $sendPSSession -Force
             }
     
