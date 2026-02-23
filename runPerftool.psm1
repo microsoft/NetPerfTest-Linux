@@ -545,8 +545,8 @@ Function ProcessToolCommands{
             }
     
             # Copy the tool binaries to the remote machines
-            Copy-Item -Path "$toolpath/$Toolname" -Destination "$RecvDir/Receiver/$Toolname" -ToSession $recvPSSession
-            Copy-Item -Path "$toolpath/$Toolname" -Destination "$SendDir/Sender/$Toolname" -ToSession $sendPSSession
+            Copy-Item -Path "$toolpath/$Toolname" -Destination "$RecvDir/Receiver/$Toolname/$Toolname" -ToSession $recvPSSession
+            Copy-Item -Path "$toolpath/$Toolname" -Destination "$SendDir/Sender/$Toolname/$Toolname" -ToSession $sendPSSession
             
             if ($Toolname -eq 'ncps') {
                 Copy-Item -Path "$toolpath/vcruntime140.dll" -Destination "$RecvDir/Receiver/$Toolname" -ToSession $recvPSSession
@@ -584,8 +584,15 @@ Function ProcessToolCommands{
             while(($null -ne ($recvCmd = $recvCommands.ReadLine())) -and ($null -ne ($sendCmd = $sendCommands.ReadLine()))) {
                 $commandCount = $commandCount + 1
                 #change the command to add path to tool
-                $recvCmd =  $recvCmd -ireplace [regex]::Escape("./$Toolname"), "$RecvDir/$Toolname/$Toolname"
-                $sendCmd =  $sendCmd -ireplace [regex]::Escape("./$Toolname"), "$SendDir/$Toolname/$Toolname"
+                # For secnetperf, the recv commands don't have output paths containing $CommandsDir, 
+                # so we need to use the full path directly including Receiver/Sender
+                if ($Toolname -eq 'secnetperf') {
+                    $recvCmd =  $recvCmd -ireplace [regex]::Escape("./$Toolname"), "$RecvDir/Receiver/$Toolname/$Toolname"
+                    $sendCmd =  $sendCmd -ireplace [regex]::Escape("./$Toolname"), "$SendDir/Sender/$Toolname/$Toolname"
+                } else {
+                    $recvCmd =  $recvCmd -ireplace [regex]::Escape("./$Toolname"), "$RecvDir/$Toolname/$Toolname"
+                    $sendCmd =  $sendCmd -ireplace [regex]::Escape("./$Toolname"), "$SendDir/$Toolname/$Toolname"
+                }
                 
                 # Work here to invoke recv commands
                 # Since we want the files to get generated under a subfolder, we replace the path to include the subfolder
