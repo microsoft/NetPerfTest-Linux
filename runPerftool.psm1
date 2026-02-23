@@ -525,11 +525,16 @@ Function ProcessToolCommands{
             if ($Toolname -eq 'secnetperf') {
                 Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockCreateDirForResults -ArgumentList ($SendDir+"/Sender/$Toolname/handshakes/quic")
                 Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockCreateDirForResults -ArgumentList ($SendDir+"/Sender/$Toolname/handshakes/tcp")
+                Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockCreateDirForResults -ArgumentList ($SendDir+"/Sender/$Toolname/requests/quic")
+                Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockCreateDirForResults -ArgumentList ($SendDir+"/Sender/$Toolname/requests/tcp")
                 Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockCreateDirForResults -ArgumentList ($SendDir+"/Sender/$Toolname/latency/quic")
                 Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockCreateDirForResults -ArgumentList ($SendDir+"/Sender/$Toolname/latency/tcp")
                 Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockCreateDirForResults -ArgumentList ($SendDir+"/Sender/$Toolname/throughput/quic")
                 Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockCreateDirForResults -ArgumentList ($SendDir+"/Sender/$Toolname/throughput/tcp")
-                Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockCreateDirForResults -ArgumentList ($RecvDir+"/Receiver/$Toolname")
+                Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockCreateDirForResults -ArgumentList ($RecvDir+"/Receiver/$Toolname/handshakes")
+                Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockCreateDirForResults -ArgumentList ($RecvDir+"/Receiver/$Toolname/latency")
+                Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockCreateDirForResults -ArgumentList ($RecvDir+"/Receiver/$Toolname/throughput")
+                Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockCreateDirForResults -ArgumentList ($RecvDir+"/Receiver/$Toolname/requests")
             } else {
                 Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockCreateDirForResults -ArgumentList ($RecvDir+"/Receiver/$Toolname/tcp")
                 Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockCreateDirForResults -ArgumentList ($SendDir+"/Sender/$Toolname/tcp")
@@ -545,8 +550,8 @@ Function ProcessToolCommands{
             }
     
             # Copy the tool binaries to the remote machines
-            Copy-Item -Path "$toolpath/$Toolname" -Destination "$RecvDir/Receiver/$Toolname/$Toolname" -ToSession $recvPSSession
-            Copy-Item -Path "$toolpath/$Toolname" -Destination "$SendDir/Sender/$Toolname/$Toolname" -ToSession $sendPSSession
+            Copy-Item -Path "$toolpath/$Toolname" -Destination "$RecvDir/Receiver/$Toolname" -ToSession $recvPSSession
+            Copy-Item -Path "$toolpath/$Toolname" -Destination "$SendDir/Sender/$Toolname" -ToSession $sendPSSession
             
             if ($Toolname -eq 'ncps') {
                 Copy-Item -Path "$toolpath/vcruntime140.dll" -Destination "$RecvDir/Receiver/$Toolname" -ToSession $recvPSSession
@@ -584,15 +589,8 @@ Function ProcessToolCommands{
             while(($null -ne ($recvCmd = $recvCommands.ReadLine())) -and ($null -ne ($sendCmd = $sendCommands.ReadLine()))) {
                 $commandCount = $commandCount + 1
                 #change the command to add path to tool
-                # For secnetperf, the recv commands don't have output paths containing $CommandsDir, 
-                # so we need to use the full path directly including Receiver/Sender
-                if ($Toolname -eq 'secnetperf') {
-                    $recvCmd =  $recvCmd -ireplace [regex]::Escape("./$Toolname"), "$RecvDir/Receiver/$Toolname/$Toolname"
-                    $sendCmd =  $sendCmd -ireplace [regex]::Escape("./$Toolname"), "$SendDir/Sender/$Toolname/$Toolname"
-                } else {
-                    $recvCmd =  $recvCmd -ireplace [regex]::Escape("./$Toolname"), "$RecvDir/$Toolname/$Toolname"
-                    $sendCmd =  $sendCmd -ireplace [regex]::Escape("./$Toolname"), "$SendDir/$Toolname/$Toolname"
-                }
+                $recvCmd =  $recvCmd -ireplace [regex]::Escape("./$Toolname"), "$RecvDir/$Toolname/$Toolname"
+                $sendCmd =  $sendCmd -ireplace [regex]::Escape("./$Toolname"), "$SendDir/$Toolname/$Toolname"
                 
                 # Work here to invoke recv commands
                 # Since we want the files to get generated under a subfolder, we replace the path to include the subfolder
@@ -687,9 +685,7 @@ Function ProcessToolCommands{
                 Remove-Item -Force -Path ("{0}/{1}_Sender" -f $CommandsDir, $Toolname) -Recurse -ErrorAction SilentlyContinue
     
                 #copy just the entire results folder from remote machines to the current (orchestrator) machine
-                if ($Toolname -ne 'secnetperf') {
-                    Copy-Item -Path "$RecvDir/Receiver/$Toolname/" -Recurse -Destination ("{0}/{1}_Receiver" -f $CommandsDir, $Toolname) -FromSession $recvPSSession -Force
-                }
+                Copy-Item -Path "$RecvDir/Receiver/$Toolname/" -Recurse -Destination ("{0}/{1}_Receiver" -f $CommandsDir, $Toolname) -FromSession $recvPSSession -Force
                 Copy-Item -Path "$SendDir/Sender/$Toolname/" -Recurse -Destination ("{0}/{1}_Sender" -f $CommandsDir, $Toolname) -FromSession $sendPSSession -Force
             }
     
