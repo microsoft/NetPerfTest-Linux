@@ -612,7 +612,7 @@ Function ProcessToolCommands{
                 # Work here to invoke recv commands
                 # Since we want the files to get generated under a subfolder, we replace the path to include the subfolder
                 $recvCmd =  $recvCmd -ireplace [regex]::Escape($CommandsDir), "$RecvDir/Receiver"
-                LogWrite "Invoking Cmd - Machine: $recvComputerName Command: $recvCmd" 
+                LogWrite "Invoking Cmd - Machine: $recvComputerName Command: $recvCmd" $true
                 $recvJob = Invoke-Command -Session $recvPSSession -ScriptBlock ([Scriptblock]::Create($recvCmd)) -AsJob 
                 
                 Start-Sleep -Seconds $PollTimeInSeconds
@@ -620,11 +620,11 @@ Function ProcessToolCommands{
                 # Work here to invoke send commands
                 # Since we want the files to get generated under a subfolder, we replace the path to include the subfolder
                 $sendCmd =  $sendCmd -ireplace [regex]::Escape($CommandsDir), "$SendDir/Sender"
-                LogWrite "Invoking Cmd - Machine: $sendComputerName Command: $sendCmd" 
+                LogWrite "Invoking Cmd - Machine: $sendComputerName Command: $sendCmd" $true
                 $sendJob = Invoke-Command -Session $sendPSSession -ScriptBlock ([Scriptblock]::Create($sendCmd)) -AsJob 
                 # non blocking loop to check if the process made a clean exit
 
-                 # Calculate actual timeout value.
+                # Calculate actual timeout value.
                 # For tools such as ntttcp, we may need to add additional #s for runtime, wu and cd times 
                 [int] $timeout = GetActualTimeOutValue -AdditionalTimeout $TimeoutValueBetweenCommandPairs -Line $sendCmd
                 LogWrite "Waiting for $timeout seconds ..."
