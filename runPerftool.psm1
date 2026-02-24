@@ -58,12 +58,34 @@ $ScriptBlockEnableToolPermissions = {
 
 $ScriptBlockMoveLibrary = {
     param ($remoteToolPath, $creds)
-    if ([String]::IsNullOrWhiteSpace($creds.GetNetworkCredential().Password)) {
-        sudo mv $remoteToolPath /usr/local/lib
-    } else {
-        Write-Output $creds.GetNetworkCredential().Password | mv $remoteToolPath /usr/local/lib
+    
+    try {
+        # Check if running as root (UID 0)
+        $isRoot = (id -u) -eq 0
+        
+        if ($isRoot) {
+            # Running as root, no sudo needed
+            mv $remoteToolPath /usr/local/lib
+            ldconfig
+            Write-Host "Successfully moved library to /usr/local/lib"
+        } else {
+            # Not root, try sudo (will fail if sudo not available)
+            if ([String]::IsNullOrWhiteSpace($creds.GetNetworkCredential().Password)) {
+                sudo mv $remoteToolPath /usr/local/lib
+                sudo ldconfig
+            } else {
+                $pass = $creds.GetNetworkCredential().Password
+                Write-Output $pass | sudo -S mv $remoteToolPath /usr/local/lib
+                Write-Output $pass | sudo -S ldconfig
+            }
+            Write-Host "Successfully moved library to /usr/local/lib using sudo"
+        }
     }
-    sudo ldconfig
+    catch {
+        # Privileged operation failed - log warning but continue
+        Write-Warning "Could not move library to /usr/local/lib (no root access). Library will remain in working directory. Ensure LD_LIBRARY_PATH is set."
+        # Library stays at $remoteToolPath location
+    }
 } # $ScriptBlockMoveLibrary()
 
 $ScriptBlockCleanupFirewallRules = {
@@ -554,8 +576,8 @@ Function ProcessToolCommands{
             } elseif ($Toolname -eq 'secnetperf') {
                 Copy-Item -Path "$toolpath/libmsquic.so.2" -Destination "$RecvDir/Receiver/$Toolname" -ToSession $recvPSSession
                 Copy-Item -Path "$toolpath/libmsquic.so.2" -Destination "$SendDir/Sender/$Toolname" -ToSession $sendPSSession
-                Invoke-Command -Session $recvPSSession -ScriptBlock ([Scriptblock]::Create("`$env:LD_LIBRARY_PATH = $RecvDir/Receiver/$Toolname"))
-                Invoke-Command -Session $sendPSSession -ScriptBlock ([Scriptblock]::Create("`$env:LD_LIBRARY_PATH = $SendDir/Sender/$Toolname"))
+                Invoke-Command -Session $recvPSSession -ScriptBlock ([Scriptblock]::Create("`$env:LD_LIBRARY_PATH = '$RecvDir/Receiver/$Toolname'"))
+                Invoke-Command -Session $sendPSSession -ScriptBlock ([Scriptblock]::Create("`$env:LD_LIBRARY_PATH = '$SendDir/Sender/$Toolname'"))
                 Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockMoveLibrary -ArgumentList ("$RecvDir/Receiver/$Toolname/libmsquic.so.2", $RecvComputerCreds)
                 Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockMoveLibrary -ArgumentList ("$SendDir/Sender/$Toolname/libmsquic.so.2", $SendComputerCreds)
             }
