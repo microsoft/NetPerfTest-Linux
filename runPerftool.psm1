@@ -664,31 +664,31 @@ Function ProcessToolCommands{
                 # }
                 # check if job was completed
                 if ($recvJob.State -ne "Completed") {
-                    LogWrite " ++ $Toolname on Receiver did not exit cleanly with state $($recvJob.State)" $true
+                    Write-Host " ++ $Toolname on Receiver did not exit cleanly with state $($recvJob.State)" $true
                     try {
                         $recvJobOutput = Receive-Job $recvJob -ErrorAction SilentlyContinue
                         if ($recvJobOutput) {
-                            LogWrite " ++ Receiver job output: $recvJobOutput" $true
+                            Write-Host " ++ Receiver job output: $recvJobOutput" $true
                         }
                         if ($recvJob.ChildJobs[0].JobStateInfo.Reason) {
-                            LogWrite " ++ Receiver job error: $($recvJob.ChildJobs[0].JobStateInfo.Reason.Message)" $true
+                            Write-Host " ++ Receiver job error: $($recvJob.ChildJobs[0].JobStateInfo.Reason.Message)" $true
                         }
                     } catch {
-                        LogWrite " ++ Unable to retrieve Receiver job output: $($_.Exception.Message)" $true
+                        Write-Host " ++ Unable to retrieve Receiver job output: $($_.Exception.Message)" $true
                     }
                 } 
                 if ($sendJob.State -ne "Completed") {
-                    LogWrite " ++ $Toolname on Sender did not exit cleanly with state $($sendJob.State)" $true
+                    Write-Host " ++ $Toolname on Sender did not exit cleanly with state $($sendJob.State)" $true
                     try {
                         $sendJobOutput = Receive-Job $sendJob -ErrorAction SilentlyContinue
                         if ($sendJobOutput) {
-                            LogWrite " ++ Sender job output: $sendJobOutput" $true
+                            Write-Host " ++ Sender job output: $sendJobOutput" $true
                         }
                         if ($sendJob.ChildJobs[0].JobStateInfo.Reason) {
-                            LogWrite " ++ Sender job error: $($sendJob.ChildJobs[0].JobStateInfo.Reason.Message)" $true
+                            Write-Host " ++ Sender job error: $($sendJob.ChildJobs[0].JobStateInfo.Reason.Message)" $true
                         }
                     } catch {
-                        LogWrite " ++ Unable to retrieve Sender job output: $($_.Exception.Message)" $true
+                        Write-Host " ++ Unable to retrieve Sender job output: $($_.Exception.Message)" $true
                     }
                 } 
                 $sw.Stop() 
