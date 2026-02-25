@@ -58,12 +58,34 @@ $ScriptBlockEnableToolPermissions = {
 
 $ScriptBlockMoveLibrary = {
     param ($remoteToolPath, $creds)
-    if ([String]::IsNullOrWhiteSpace($creds.GetNetworkCredential().Password)) {
-        sudo mv $remoteToolPath /usr/local/lib
-    } else {
-        Write-Output $creds.GetNetworkCredential().Password | mv $remoteToolPath /usr/local/lib
+    
+    try {
+        # Check if running as root (UID 0)
+        $isRoot = (id -u) -eq 0
+        
+        if ($isRoot) {
+            # Running as root, no sudo needed
+            mv $remoteToolPath /usr/local/lib
+            ldconfig
+            Write-Host "Successfully moved library to /usr/local/lib"
+        } else {
+            # Not root, try sudo (will fail if sudo not available)
+            if ([String]::IsNullOrWhiteSpace($creds.GetNetworkCredential().Password)) {
+                sudo mv $remoteToolPath /usr/local/lib
+                sudo ldconfig
+            } else {
+                $pass = $creds.GetNetworkCredential().Password
+                Write-Output $pass | sudo -S mv $remoteToolPath /usr/local/lib
+                Write-Output $pass | sudo -S ldconfig
+            }
+            Write-Host "Successfully moved library to /usr/local/lib using sudo"
+        }
     }
-    sudo ldconfig
+    catch {
+        # Privileged operation failed - log warning but continue
+        Write-Warning "Could not move library to /usr/local/lib (no root access). Library will remain in working directory. Ensure LD_LIBRARY_PATH is set."
+        # Library stays at $remoteToolPath location
+    }
 } # $ScriptBlockMoveLibrary()
 
 $ScriptBlockCleanupFirewallRules = {
@@ -559,8 +581,8 @@ Function ProcessToolCommands{
             } elseif ($Toolname -eq 'secnetperf') {
                 Copy-Item -Path "$toolpath/libmsquic.so.2" -Destination "$RecvDir/Receiver/$Toolname" -ToSession $recvPSSession
                 Copy-Item -Path "$toolpath/libmsquic.so.2" -Destination "$SendDir/Sender/$Toolname" -ToSession $sendPSSession
-                Invoke-Command -Session $recvPSSession -ScriptBlock ([Scriptblock]::Create("`$env:LD_LIBRARY_PATH = $RecvDir/Receiver/$Toolname"))
-                Invoke-Command -Session $sendPSSession -ScriptBlock ([Scriptblock]::Create("`$env:LD_LIBRARY_PATH = $SendDir/Sender/$Toolname"))
+                Invoke-Command -Session $recvPSSession -ScriptBlock ([Scriptblock]::Create("`$env:LD_LIBRARY_PATH = '$RecvDir/Receiver/$Toolname'"))
+                Invoke-Command -Session $sendPSSession -ScriptBlock ([Scriptblock]::Create("`$env:LD_LIBRARY_PATH = '$SendDir/Sender/$Toolname'"))
                 Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockMoveLibrary -ArgumentList ("$RecvDir/Receiver/$Toolname/libmsquic.so.2", $RecvComputerCreds)
                 Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockMoveLibrary -ArgumentList ("$SendDir/Sender/$Toolname/libmsquic.so.2", $SendComputerCreds)
             }
@@ -600,26 +622,20 @@ Function ProcessToolCommands{
                 
                 # Work here to invoke recv commands
                 # Since we want the files to get generated under a subfolder, we replace the path to include the subfolder
-                # Skip for secnetperf since we already included /Receiver/ and /Sender/ in the path above
-                if ($Toolname -ne 'secnetperf') {
-                    $recvCmd =  $recvCmd -ireplace [regex]::Escape($CommandsDir), "$RecvDir/Receiver"
-                }
-                LogWrite "Invoking Cmd - Machine: $recvComputerName Command: $recvCmd" 
+                $recvCmd =  $recvCmd -ireplace [regex]::Escape($CommandsDir), "$RecvDir/Receiver"
+                LogWrite "Invoking Cmd - Machine: $recvComputerName Command: $recvCmd" $true
                 $recvJob = Invoke-Command -Session $recvPSSession -ScriptBlock ([Scriptblock]::Create($recvCmd)) -AsJob 
                 
                 Start-Sleep -Seconds $PollTimeInSeconds
                 
                 # Work here to invoke send commands
                 # Since we want the files to get generated under a subfolder, we replace the path to include the subfolder
-                # Skip for secnetperf since we already included /Sender/ in the path above
-                if ($Toolname -ne 'secnetperf') {
-                    $sendCmd =  $sendCmd -ireplace [regex]::Escape($CommandsDir), "$SendDir/Sender"
-                }
-                LogWrite "Invoking Cmd - Machine: $sendComputerName Command: $sendCmd" 
+                $sendCmd =  $sendCmd -ireplace [regex]::Escape($CommandsDir), "$SendDir/Sender"
+                LogWrite "Invoking Cmd - Machine: $sendComputerName Command: $sendCmd" $true
                 $sendJob = Invoke-Command -Session $sendPSSession -ScriptBlock ([Scriptblock]::Create($sendCmd)) -AsJob 
                 # non blocking loop to check if the process made a clean exit
 
-                 # Calculate actual timeout value.
+                # Calculate actual timeout value.
                 # For tools such as ntttcp, we may need to add additional #s for runtime, wu and cd times 
                 [int] $timeout = GetActualTimeOutValue -AdditionalTimeout $TimeoutValueBetweenCommandPairs -Line $sendCmd
                 LogWrite "Waiting for $timeout seconds ..."
@@ -648,10 +664,32 @@ Function ProcessToolCommands{
                 # }
                 # check if job was completed
                 if ($recvJob.State -ne "Completed") {
-                    LogWrite " ++ $Toolname on Receiver did not exit cleanly with state " $recvJob.State
+                    LogWrite " ++ $Toolname on Receiver did not exit cleanly with state $($recvJob.State)" $true
+                    try {
+                        $recvJobOutput = Receive-Job $recvJob -ErrorAction SilentlyContinue
+                        if ($recvJobOutput) {
+                            LogWrite " ++ Receiver job output: $recvJobOutput" $true
+                        }
+                        if ($recvJob.ChildJobs[0].JobStateInfo.Reason) {
+                            LogWrite " ++ Receiver job error: $($recvJob.ChildJobs[0].JobStateInfo.Reason.Message)" $true
+                        }
+                    } catch {
+                        LogWrite " ++ Unable to retrieve Receiver job output: $($_.Exception.Message)" $true
+                    }
                 } 
                 if ($sendJob.State -ne "Completed") {
-                    LogWrite " ++ $Toolname on Sender did not exit cleanly with state " $sendJob.State
+                    LogWrite " ++ $Toolname on Sender did not exit cleanly with state $($sendJob.State)" $true
+                    try {
+                        $sendJobOutput = Receive-Job $sendJob -ErrorAction SilentlyContinue
+                        if ($sendJobOutput) {
+                            LogWrite " ++ Sender job output: $sendJobOutput" $true
+                        }
+                        if ($sendJob.ChildJobs[0].JobStateInfo.Reason) {
+                            LogWrite " ++ Sender job error: $($sendJob.ChildJobs[0].JobStateInfo.Reason.Message)" $true
+                        }
+                    } catch {
+                        LogWrite " ++ Unable to retrieve Sender job output: $($_.Exception.Message)" $true
+                    }
                 } 
                 $sw.Stop() 
                 # Since time is up, stop job process so that new commands can be issued
