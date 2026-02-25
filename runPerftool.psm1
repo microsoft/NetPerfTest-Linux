@@ -69,22 +69,14 @@ $ScriptBlockMoveLibrary = {
             ldconfig
             Write-Host "Successfully moved library to /usr/local/lib"
         } else {
-            # Not root, try sudo (will fail if sudo not available)
-            if ([String]::IsNullOrWhiteSpace($creds.GetNetworkCredential().Password)) {
-                sudo mv $remoteToolPath /usr/local/lib
-                sudo ldconfig
-            } else {
-                $pass = $creds.GetNetworkCredential().Password
-                Write-Output $pass | sudo -S mv $remoteToolPath /usr/local/lib
-                Write-Output $pass | sudo -S ldconfig
-            }
-            Write-Host "Successfully moved library to /usr/local/lib using sudo"
+            # Not root - don't attempt sudo as it requires terminal access
+            # Library will remain in working directory; LD_LIBRARY_PATH is set in the command
+            Write-Host "Not running as root. Library will remain in working directory (LD_LIBRARY_PATH will be used)."
         }
     }
     catch {
         # Privileged operation failed - log warning but continue
-        Write-Warning "Could not move library to /usr/local/lib (no root access). Library will remain in working directory. Ensure LD_LIBRARY_PATH is set."
-        # Library stays at $remoteToolPath location
+        Write-Warning "Could not move library to /usr/local/lib. Library will remain in working directory (LD_LIBRARY_PATH will be used)."
     }
 } # $ScriptBlockMoveLibrary()
 
@@ -612,9 +604,10 @@ Function ProcessToolCommands{
                 $commandCount = $commandCount + 1
                 #change the command to add path to tool
                 # For secnetperf, use full path directly since recv commands don't have output paths containing $CommandsDir
+                # Also prepend LD_LIBRARY_PATH to ensure libmsquic.so.2 is found
                 if ($Toolname -eq 'secnetperf') {
-                    $recvCmd =  $recvCmd -ireplace [regex]::Escape("./$Toolname"), "$RecvDir/Receiver/$Toolname/$Toolname"
-                    $sendCmd =  $sendCmd -ireplace [regex]::Escape("./$Toolname"), "$SendDir/Sender/$Toolname/$Toolname"
+                    $recvCmd =  $recvCmd -ireplace [regex]::Escape("./$Toolname"), "LD_LIBRARY_PATH=$RecvDir/Receiver/$Toolname $RecvDir/Receiver/$Toolname/$Toolname"
+                    $sendCmd =  $sendCmd -ireplace [regex]::Escape("./$Toolname"), "LD_LIBRARY_PATH=$SendDir/Sender/$Toolname $SendDir/Sender/$Toolname/$Toolname"
                 } else {
                     $recvCmd =  $recvCmd -ireplace [regex]::Escape("./$Toolname"), "$RecvDir/$Toolname/$Toolname"
                     $sendCmd =  $sendCmd -ireplace [regex]::Escape("./$Toolname"), "$SendDir/$Toolname/$Toolname"
@@ -622,7 +615,10 @@ Function ProcessToolCommands{
                 
                 # Work here to invoke recv commands
                 # Since we want the files to get generated under a subfolder, we replace the path to include the subfolder
-                $recvCmd =  $recvCmd -ireplace [regex]::Escape($CommandsDir), "$RecvDir/Receiver"
+                # Skip this replacement for secnetperf since we already built the full path with /Receiver/ above
+                if ($Toolname -ne 'secnetperf') {
+                    $recvCmd =  $recvCmd -ireplace [regex]::Escape($CommandsDir), "$RecvDir/Receiver"
+                }
                 LogWrite "Invoking Cmd - Machine: $recvComputerName Command: $recvCmd" $true
                 $recvJob = Invoke-Command -Session $recvPSSession -ScriptBlock ([Scriptblock]::Create($recvCmd)) -AsJob 
                 
@@ -630,7 +626,10 @@ Function ProcessToolCommands{
                 
                 # Work here to invoke send commands
                 # Since we want the files to get generated under a subfolder, we replace the path to include the subfolder
-                $sendCmd =  $sendCmd -ireplace [regex]::Escape($CommandsDir), "$SendDir/Sender"
+                # Skip this replacement for secnetperf since we already built the full path with /Sender/ above
+                if ($Toolname -ne 'secnetperf') {
+                    $sendCmd =  $sendCmd -ireplace [regex]::Escape($CommandsDir), "$SendDir/Sender"
+                }
                 LogWrite "Invoking Cmd - Machine: $sendComputerName Command: $sendCmd" $true
                 $sendJob = Invoke-Command -Session $sendPSSession -ScriptBlock ([Scriptblock]::Create($sendCmd)) -AsJob 
                 # non blocking loop to check if the process made a clean exit
@@ -690,7 +689,28 @@ Function ProcessToolCommands{
                     } catch {
                         Write-Host " ++ Unable to retrieve Sender job output: $($_.Exception.Message)" $true
                     }
-                } 
+                } else {
+                    # Job completed successfully - log output for debugging
+                    try {
+                        $sendJobOutput = Receive-Job $sendJob -ErrorAction SilentlyContinue
+                        if ($sendJobOutput) {
+                            Write-Host " ++ Sender job completed. Output: $sendJobOutput" $true
+                        }
+                    } catch {
+                        # Ignore errors when retrieving successful job output
+                    }
+                }
+                if ($recvJob.State -eq "Completed") {
+                    # Receiver job completed successfully - log output for debugging
+                    try {
+                        $recvJobOutput = Receive-Job $recvJob -ErrorAction SilentlyContinue
+                        if ($recvJobOutput) {
+                            Write-Host " ++ Receiver job completed. Output: $recvJobOutput" $true
+                        }
+                    } catch {
+                        # Ignore errors when retrieving successful job output
+                    }
+                }
                 $sw.Stop() 
                 # Since time is up, stop job process so that new commands can be issued
                 Stop-Job $recvJob
