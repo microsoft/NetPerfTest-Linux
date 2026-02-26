@@ -604,7 +604,7 @@ Function ProcessToolCommands{
                 $commandCount = $commandCount + 1
                 #change the command to add path to tool
                 # For secnetperf, use full path directly since recv commands don't have output paths containing $CommandsDir
-                # Also prepend LD_LIBRARY_PATH to ensure libmsquic.so.2 is found
+                # Also prepend LD_LIBRARY_PATH to ensure libmsquic.so.2 is found (env var set via Invoke-Command doesn't propagate to shell commands)
                 if ($Toolname -eq 'secnetperf') {
                     $recvCmd =  $recvCmd -ireplace [regex]::Escape("./$Toolname"), "LD_LIBRARY_PATH=$RecvDir/Receiver/$Toolname $RecvDir/Receiver/$Toolname/$Toolname"
                     $sendCmd =  $sendCmd -ireplace [regex]::Escape("./$Toolname"), "LD_LIBRARY_PATH=$SendDir/Sender/$Toolname $SendDir/Sender/$Toolname/$Toolname"
@@ -627,9 +627,7 @@ Function ProcessToolCommands{
                 # Work here to invoke send commands
                 # Since we want the files to get generated under a subfolder, we replace the path to include the subfolder
                 # Skip this replacement for secnetperf since we already built the full path with /Sender/ above
-                if ($Toolname -ne 'secnetperf') {
-                    $sendCmd =  $sendCmd -ireplace [regex]::Escape($CommandsDir), "$SendDir/Sender"
-                }
+                $sendCmd =  $sendCmd -ireplace [regex]::Escape($CommandsDir), "$SendDir/Sender"
                 LogWrite "Invoking Cmd - Machine: $sendComputerName Command: $sendCmd" $true
                 $sendJob = Invoke-Command -Session $sendPSSession -ScriptBlock ([Scriptblock]::Create($sendCmd)) -AsJob 
                 # non blocking loop to check if the process made a clean exit
