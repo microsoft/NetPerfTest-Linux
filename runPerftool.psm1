@@ -604,10 +604,13 @@ Function ProcessToolCommands{
                 $commandCount = $commandCount + 1
                 #change the command to add path to tool
                 # For secnetperf, use full path directly since recv commands don't have output paths containing $CommandsDir
-                # Use 'env' to set LD_LIBRARY_PATH since PowerShell doesn't understand POSIX VAR=value syntax
+                # Wrap in bash -c to properly set LD_LIBRARY_PATH since PowerShell doesn't understand POSIX VAR=value syntax
                 if ($Toolname -eq 'secnetperf') {
-                    $recvCmd =  $recvCmd -ireplace [regex]::Escape("./$Toolname"), "env LD_LIBRARY_PATH=$RecvDir/Receiver/$Toolname $RecvDir/Receiver/$Toolname/$Toolname"
-                    $sendCmd =  $sendCmd -ireplace [regex]::Escape("./$Toolname"), "env LD_LIBRARY_PATH=$SendDir/Sender/$Toolname $SendDir/Sender/$Toolname/$Toolname"
+                    $recvCmd =  $recvCmd -ireplace [regex]::Escape("./$Toolname"), "$RecvDir/Receiver/$Toolname/$Toolname"
+                    $sendCmd =  $sendCmd -ireplace [regex]::Escape("./$Toolname"), "$SendDir/Sender/$Toolname/$Toolname"
+                    # Wrap entire command with bash -c and set LD_LIBRARY_PATH
+                    $recvCmd = "bash -c 'export LD_LIBRARY_PATH=$RecvDir/Receiver/$Toolname; $recvCmd'"
+                    $sendCmd = "bash -c 'export LD_LIBRARY_PATH=$SendDir/Sender/$Toolname; $sendCmd'"
                 } else {
                     $recvCmd =  $recvCmd -ireplace [regex]::Escape("./$Toolname"), "$RecvDir/$Toolname/$Toolname"
                     $sendCmd =  $sendCmd -ireplace [regex]::Escape("./$Toolname"), "$SendDir/$Toolname/$Toolname"
