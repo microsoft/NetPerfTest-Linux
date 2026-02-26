@@ -604,10 +604,10 @@ Function ProcessToolCommands{
                 $commandCount = $commandCount + 1
                 #change the command to add path to tool
                 # For secnetperf, use full path directly since recv commands don't have output paths containing $CommandsDir
-                # Also prepend LD_LIBRARY_PATH to ensure libmsquic.so.2 is found (env var set via Invoke-Command doesn't propagate to shell commands)
+                # Use 'env' to set LD_LIBRARY_PATH since PowerShell doesn't understand POSIX VAR=value syntax
                 if ($Toolname -eq 'secnetperf') {
-                    $recvCmd =  $recvCmd -ireplace [regex]::Escape("./$Toolname"), "LD_LIBRARY_PATH=$RecvDir/Receiver/$Toolname $RecvDir/Receiver/$Toolname/$Toolname"
-                    $sendCmd =  $sendCmd -ireplace [regex]::Escape("./$Toolname"), "LD_LIBRARY_PATH=$SendDir/Sender/$Toolname $SendDir/Sender/$Toolname/$Toolname"
+                    $recvCmd =  $recvCmd -ireplace [regex]::Escape("./$Toolname"), "env LD_LIBRARY_PATH=$RecvDir/Receiver/$Toolname $RecvDir/Receiver/$Toolname/$Toolname"
+                    $sendCmd =  $sendCmd -ireplace [regex]::Escape("./$Toolname"), "env LD_LIBRARY_PATH=$SendDir/Sender/$Toolname $SendDir/Sender/$Toolname/$Toolname"
                 } else {
                     $recvCmd =  $recvCmd -ireplace [regex]::Escape("./$Toolname"), "$RecvDir/$Toolname/$Toolname"
                     $sendCmd =  $sendCmd -ireplace [regex]::Escape("./$Toolname"), "$SendDir/$Toolname/$Toolname"
