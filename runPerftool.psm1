@@ -573,8 +573,6 @@ Function ProcessToolCommands{
             } elseif ($Toolname -eq 'secnetperf') {
                 Copy-Item -Path "$toolpath/libmsquic.so.2" -Destination "$RecvDir/Receiver/$Toolname" -ToSession $recvPSSession
                 Copy-Item -Path "$toolpath/libmsquic.so.2" -Destination "$SendDir/Sender/$Toolname" -ToSession $sendPSSession
-                Invoke-Command -Session $recvPSSession -ScriptBlock ([Scriptblock]::Create("`$env:LD_LIBRARY_PATH = '$RecvDir/Receiver/$Toolname'"))
-                Invoke-Command -Session $sendPSSession -ScriptBlock ([Scriptblock]::Create("`$env:LD_LIBRARY_PATH = '$SendDir/Sender/$Toolname'"))
                 Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockMoveLibrary -ArgumentList ("$RecvDir/Receiver/$Toolname/libmsquic.so.2", $RecvComputerCreds)
                 Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockMoveLibrary -ArgumentList ("$SendDir/Sender/$Toolname/libmsquic.so.2", $SendComputerCreds)
             }
@@ -604,18 +602,9 @@ Function ProcessToolCommands{
                 $commandCount = $commandCount + 1
                 #change the command to add path to tool
                 # For secnetperf, use full path directly since recv commands don't have output paths containing $CommandsDir
-                # Wrap in bash -c to properly set LD_LIBRARY_PATH since PowerShell doesn't understand POSIX VAR=value syntax
-                if ($Toolname -eq 'secnetperf') {
-                    $recvCmd =  $recvCmd -ireplace [regex]::Escape("./$Toolname"), "$RecvDir/Receiver/$Toolname/$Toolname"
-                    $sendCmd =  $sendCmd -ireplace [regex]::Escape("./$Toolname"), "$SendDir/Sender/$Toolname/$Toolname"
-                    # Wrap entire command with bash -c and set LD_LIBRARY_PATH
-                    $recvCmd = "bash -c 'export LD_LIBRARY_PATH=$RecvDir/Receiver/$Toolname; $recvCmd'"
-                    $sendCmd = "bash -c 'export LD_LIBRARY_PATH=$SendDir/Sender/$Toolname; $sendCmd'"
-                } else {
-                    $recvCmd =  $recvCmd -ireplace [regex]::Escape("./$Toolname"), "$RecvDir/$Toolname/$Toolname"
-                    $sendCmd =  $sendCmd -ireplace [regex]::Escape("./$Toolname"), "$SendDir/$Toolname/$Toolname"
-                }
-                
+                $recvCmd =  $recvCmd -ireplace [regex]::Escape("./$Toolname"), "$RecvDir/$Toolname/$Toolname"
+                $sendCmd =  $sendCmd -ireplace [regex]::Escape("./$Toolname"), "$SendDir/$Toolname/$Toolname"
+            
                 # Work here to invoke recv commands
                 # Since we want the files to get generated under a subfolder, we replace the path to include the subfolder
                 # Skip this replacement for secnetperf since we already built the full path with /Receiver/ above
