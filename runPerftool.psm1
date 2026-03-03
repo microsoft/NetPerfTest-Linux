@@ -69,22 +69,18 @@ $ScriptBlockMoveLibrary = {
             ldconfig
             Write-Host "Successfully moved library to /usr/local/lib"
         }
+        elseif ([String]::IsNullOrWhiteSpace($creds.GetNetworkCredential().Password)) {
+            sudo mv $remoteToolPath /usr/local/lib
+            sudo ldconfig
+        } 
         else {
-            # Check if passwordless sudo is available
-            sudo -n true 2>$null
-            $canSudo = $LASTEXITCODE -eq 0
-            if ($canSudo) {
-                sudo ln -s $remoteToolPath /usr/local/lib/$(basename $remoteToolPath)
-                sudo ldconfig
-                Write-Host "Successfully linked library to /usr/local/lib using sudo"
-            } else {
-                Write-Host "Not running as root and passwordless sudo not available. Library will remain in working directory."
-            }
+            Write-Output $creds.GetNetworkCredential().Password | sudo -S mv $remoteToolPath /usr/local/lib
+            Write-Output $creds.GetNetworkCredential().Password | sudo -S ldconfig
         }
     }
     catch {
         # Privileged operation failed - log warning but continue
-        Write-Warning "Could not move library to /usr/local/lib. Library will remain in working directory."
+        Write-Warning "Could not move library to /usr/local/lib. Library will remain in working directory (LD_LIBRARY_PATH will be used)."
     }
 } # $ScriptBlockMoveLibrary()
 
@@ -98,15 +94,10 @@ $ScriptBlockCleanupFirewallRules = {
     if ($null -eq $hasUfw) {
         Write-Host 'Ufw is not installed'
     }
-    else {
-        # Check if passwordless sudo is available
-        sudo -n true 2>$null
-        $canSudo = $LASTEXITCODE -eq 0
-        if ($canSudo) {
-            sudo ufw delete allow $port | Out-Null
-        } else {
-            Write-Host "Passwordless sudo not available, skipping firewall cleanup for port $port"
-        }
+    elseif ([String]::IsNullOrWhiteSpace($creds.GetNetworkCredential().Password)) {
+        sudo ufw delete allow $port | Out-Null
+    } else {
+        Write-Output $creds.GetNetworkCredential().Password | sudo -S ufw delete allow $port | Out-Null
     }
  } # $ScriptBlockCleanupFirewallRules()
 
@@ -120,15 +111,10 @@ $ScriptBlockEnableFirewallRules = {
     if ($null -eq $hasUfw) {
         Write-Host 'Ufw is not installed'
     }
-    else {
-        # Check if passwordless sudo is available
-        sudo -n true 2>$null
-        $canSudo = $LASTEXITCODE -eq 0
-        if ($canSudo) {
-            sudo ufw allow $port | Out-Null
-        } else {
-            Write-Host "Passwordless sudo not available, skipping firewall rule for port $port"
-        }
+    elseif ([String]::IsNullOrWhiteSpace($creds.GetNetworkCredential().Password)) {
+        sudo ufw allow $port | Out-Null
+    } else {
+        Write-Output $creds.GetNetworkCredential().Password | sudo -S ufw allow $port | Out-Null
     }
  } # $ScriptBlockEnableFirewallRules()
 
@@ -139,18 +125,6 @@ $ScriptBlockTaskKill = {
         killall $taskname | Out-Null
     }
 } # $ScriptBlockTaskKill()
-
-# Check if passwordless sudo is available on the remote machine
-$ScriptBlockHasSudo = {
-    # Check if sudo exists and can run without a password
-    $hasSudo = command -v sudo 2>$null
-    if ([string]::IsNullOrEmpty($hasSudo)) {
-        return $false
-    }
-    # Test if sudo can run without a password prompt (using -n for non-interactive)
-    sudo -n true 2>$null
-    return $LASTEXITCODE -eq 0
-} # $ScriptBlockHasSudo()
 
 # Set up a directory on the remote machines for results gathering.
 $ScriptBlockCreateDirForResults = {
@@ -592,10 +566,6 @@ Function ProcessToolCommands{
             if ($ArmRecv -and $ArmSend) {
                 $toolpath = "./{0}/arm64" -f $Toolname
             }
-
-            # Check if sudo is available (used for secnetperf)
-            $hasSudoRecv = Invoke-Command -Session $recvPSSession -ScriptBlock $ScriptBlockHasSudo
-            $hasSudoSend = Invoke-Command -Session $sendPSSession -ScriptBlock $ScriptBlockHasSudo
     
             # Copy the tool binaries to the remote machines
             Copy-Item -Path "$toolpath/$Toolname" -Destination "$RecvDir/Receiver/$Toolname/$Toolname" -ToSession $recvPSSession
@@ -635,16 +605,9 @@ Function ProcessToolCommands{
             while(($null -ne ($recvCmd = $recvCommands.ReadLine())) -and ($null -ne ($sendCmd = $sendCommands.ReadLine()))) {
                 $commandCount = $commandCount + 1
                 #change the command to add path to tool
-                # For secnetperf, use full path with /Receiver/ and /Sender/ included, and run with sudo if available
-                if ($Toolname -eq 'secnetperf') {
-                    $sudoPrefixRecv = if ($hasSudoRecv) { "sudo " } else { "" }
-                    $sudoPrefixSend = if ($hasSudoSend) { "sudo " } else { "" }
-                    $recvCmd =  $recvCmd -ireplace [regex]::Escape("./$Toolname"), "$sudoPrefixRecv$RecvDir/$Toolname/$Toolname"
-                    $sendCmd =  $sendCmd -ireplace [regex]::Escape("./$Toolname"), "$sudoPrefixSend$SendDir/$Toolname/$Toolname"
-                } else {
-                    $recvCmd =  $recvCmd -ireplace [regex]::Escape("./$Toolname"), "$RecvDir/$Toolname/$Toolname"
-                    $sendCmd =  $sendCmd -ireplace [regex]::Escape("./$Toolname"), "$SendDir/$Toolname/$Toolname"
-                }
+                # For secnetperf, use full path directly since recv commands don't have output paths containing $CommandsDir
+                $recvCmd =  $recvCmd -ireplace [regex]::Escape("./$Toolname"), "$RecvDir/$Toolname/$Toolname"
+                $sendCmd =  $sendCmd -ireplace [regex]::Escape("./$Toolname"), "$SendDir/$Toolname/$Toolname"
             
                 # Work here to invoke recv commands
                 # Since we want the files to get generated under a subfolder, we replace the path to include the subfolder
