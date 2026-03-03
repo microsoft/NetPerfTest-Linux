@@ -612,9 +612,7 @@ Function ProcessToolCommands{
                 # Work here to invoke recv commands
                 # Since we want the files to get generated under a subfolder, we replace the path to include the subfolder
                 # Skip this replacement for secnetperf since we already built the full path with /Receiver/ above
-                if ($Toolname -ne 'secnetperf') {
-                    $recvCmd =  $recvCmd -ireplace [regex]::Escape($CommandsDir), "$RecvDir/Receiver"
-                }
+                $recvCmd =  $recvCmd -ireplace [regex]::Escape($CommandsDir), "$RecvDir/Receiver"
                 LogWrite "Invoking Cmd - Machine: $recvComputerName Command: $recvCmd" $true
                 $recvJob = Invoke-Command -Session $recvPSSession -ScriptBlock ([Scriptblock]::Create($recvCmd)) -AsJob 
                 
