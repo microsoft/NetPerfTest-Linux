@@ -71,7 +71,8 @@ $ScriptBlockMoveLibrary = {
         }
         else {
             # Check if passwordless sudo is available
-            $canSudo = (sudo -n true 2>&1; $LASTEXITCODE -eq 0)
+            sudo -n true 2>$null
+            $canSudo = $LASTEXITCODE -eq 0
             if ($canSudo) {
                 sudo ln -s $remoteToolPath /usr/local/lib/$(basename $remoteToolPath)
                 sudo ldconfig
@@ -99,7 +100,8 @@ $ScriptBlockCleanupFirewallRules = {
     }
     else {
         # Check if passwordless sudo is available
-        $canSudo = (sudo -n true 2>&1; $LASTEXITCODE -eq 0)
+        sudo -n true 2>$null
+        $canSudo = $LASTEXITCODE -eq 0
         if ($canSudo) {
             sudo ufw delete allow $port | Out-Null
         } else {
@@ -120,7 +122,8 @@ $ScriptBlockEnableFirewallRules = {
     }
     else {
         # Check if passwordless sudo is available
-        $canSudo = (sudo -n true 2>&1; $LASTEXITCODE -eq 0)
+        sudo -n true 2>$null
+        $canSudo = $LASTEXITCODE -eq 0
         if ($canSudo) {
             sudo ufw allow $port | Out-Null
         } else {
@@ -145,7 +148,7 @@ $ScriptBlockHasSudo = {
         return $false
     }
     # Test if sudo can run without a password prompt (using -n for non-interactive)
-    $result = sudo -n true 2>&1
+    sudo -n true 2>$null
     return $LASTEXITCODE -eq 0
 } # $ScriptBlockHasSudo()
 
