@@ -69,18 +69,30 @@ $ScriptBlockMoveLibrary = {
             ldconfig
             Write-Host "Successfully moved library to /usr/local/lib"
         }
-        elseif ([String]::IsNullOrWhiteSpace($creds.GetNetworkCredential().Password)) {
-            sudo mv $remoteToolPath /usr/local/lib
-            sudo ldconfig
-        } 
         else {
-            Write-Output $creds.GetNetworkCredential().Password | sudo -S mv $remoteToolPath /usr/local/lib
-            Write-Output $creds.GetNetworkCredential().Password | sudo -S ldconfig
+            # Check if passwordless sudo is available
+            sudo -n true 2>$null
+            $canSudo = $LASTEXITCODE -eq 0
+            if ($canSudo) {
+                sudo mv $remoteToolPath /usr/local/lib
+                sudo ldconfig
+                Write-Host "Successfully moved library to /usr/local/lib using sudo"
+            }
+            elseif (-not [String]::IsNullOrWhiteSpace($creds.GetNetworkCredential().Password)) {
+                # Try with password
+                $pass = $creds.GetNetworkCredential().Password
+                Write-Output $pass | sudo -S mv $remoteToolPath /usr/local/lib 2>$null
+                Write-Output $pass | sudo -S ldconfig 2>$null
+                Write-Host "Successfully moved library to /usr/local/lib using sudo with password"
+            }
+            else {
+                Write-Host "Not running as root and sudo not available. Library will remain in working directory."
+            }
         }
     }
     catch {
-        # Privileged operation failed - log warning but continue
-        Write-Warning "Could not move library to /usr/local/lib. Library will remain in working directory (LD_LIBRARY_PATH will be used)."
+        # Privileged operation failed - log warning and error details
+        Write-Warning "Could not move library to /usr/local/lib: $($_.Exception.Message)"
     }
 } # $ScriptBlockMoveLibrary()
 
@@ -94,10 +106,19 @@ $ScriptBlockCleanupFirewallRules = {
     if ($null -eq $hasUfw) {
         Write-Host 'Ufw is not installed'
     }
-    elseif ([String]::IsNullOrWhiteSpace($creds.GetNetworkCredential().Password)) {
-        sudo ufw delete allow $port | Out-Null
-    } else {
-        Write-Output $creds.GetNetworkCredential().Password | sudo -S ufw delete allow $port | Out-Null
+    else {
+        # Check if passwordless sudo is available
+        sudo -n true 2>$null
+        $canSudo = $LASTEXITCODE -eq 0
+        if ($canSudo) {
+            sudo ufw delete allow $port | Out-Null
+        }
+        elseif (-not [String]::IsNullOrWhiteSpace($creds.GetNetworkCredential().Password)) {
+            Write-Output $creds.GetNetworkCredential().Password | sudo -S ufw delete allow $port 2>$null | Out-Null
+        }
+        else {
+            Write-Host "Sudo not available, skipping firewall cleanup for port $port"
+        }
     }
  } # $ScriptBlockCleanupFirewallRules()
 
@@ -111,10 +132,19 @@ $ScriptBlockEnableFirewallRules = {
     if ($null -eq $hasUfw) {
         Write-Host 'Ufw is not installed'
     }
-    elseif ([String]::IsNullOrWhiteSpace($creds.GetNetworkCredential().Password)) {
-        sudo ufw allow $port | Out-Null
-    } else {
-        Write-Output $creds.GetNetworkCredential().Password | sudo -S ufw allow $port | Out-Null
+    else {
+        # Check if passwordless sudo is available
+        sudo -n true 2>$null
+        $canSudo = $LASTEXITCODE -eq 0
+        if ($canSudo) {
+            sudo ufw allow $port | Out-Null
+        }
+        elseif (-not [String]::IsNullOrWhiteSpace($creds.GetNetworkCredential().Password)) {
+            Write-Output $creds.GetNetworkCredential().Password | sudo -S ufw allow $port 2>$null | Out-Null
+        }
+        else {
+            Write-Host "Sudo not available, skipping firewall rule for port $port"
+        }
     }
  } # $ScriptBlockEnableFirewallRules()
 
