@@ -68,10 +68,14 @@ $ScriptBlockMoveLibrary = {
             mv $remoteToolPath /usr/local/lib
             ldconfig
             Write-Host "Successfully moved library to /usr/local/lib"
-        } else {
-            # Not root - don't attempt sudo as it requires terminal access
-            # Library will remain in working directory; LD_LIBRARY_PATH is set in the command
-            Write-Host "Not running as root. Library will remain in working directory (LD_LIBRARY_PATH will be used)."
+        }
+        elseif ([String]::IsNullOrWhiteSpace($creds.GetNetworkCredential().Password)) {
+            sudo ln -s $remoteToolPath /usr/local/lib/$(basename $remoteToolPath)
+            sudo ldconfig
+        } 
+        else {
+            Write-Output $creds.GetNetworkCredential().Password | sudo -S ln -s $remoteToolPath /usr/local/lib/$(basename $remoteToolPath)
+            Write-Output $creds.GetNetworkCredential().Password | sudo -S ldconfig
         }
     }
     catch {
