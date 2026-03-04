@@ -71,18 +71,18 @@ $ScriptBlockMoveLibrary = {
         }
         else {
             # Check if passwordless sudo is available
-            sudo -n true 2>$null
+            /usr/bin/sudo -n true 2>$null
             $canSudo = $LASTEXITCODE -eq 0
             if ($canSudo) {
-                sudo mv $remoteToolPath /usr/local/lib
-                sudo ldconfig
+                /usr/bin/sudo mv $remoteToolPath /usr/local/lib
+                /usr/bin/sudo ldconfig
                 Write-Host "Successfully moved library to /usr/local/lib using sudo"
             }
             elseif (-not [String]::IsNullOrWhiteSpace($creds.GetNetworkCredential().Password)) {
                 # Try with password
                 $pass = $creds.GetNetworkCredential().Password
-                Write-Output $pass | sudo -S mv $remoteToolPath /usr/local/lib 2>$null
-                Write-Output $pass | sudo -S ldconfig 2>$null
+                Write-Output $pass | /usr/bin/sudo -S mv $remoteToolPath /usr/local/lib 2>$null
+                Write-Output $pass | /usr/bin/sudo -S ldconfig 2>$null
                 Write-Host "Successfully moved library to /usr/local/lib using sudo with password"
             }
             else {
@@ -108,13 +108,13 @@ $ScriptBlockCleanupFirewallRules = {
     }
     else {
         # Check if passwordless sudo is available
-        sudo -n true 2>$null
+        /usr/bin/sudo -n true 2>$null
         $canSudo = $LASTEXITCODE -eq 0
         if ($canSudo) {
-            sudo ufw delete allow $port | Out-Null
+            /usr/bin/sudo ufw delete allow $port | Out-Null
         }
         elseif (-not [String]::IsNullOrWhiteSpace($creds.GetNetworkCredential().Password)) {
-            Write-Output $creds.GetNetworkCredential().Password | sudo -S ufw delete allow $port 2>$null | Out-Null
+            Write-Output $creds.GetNetworkCredential().Password | /usr/bin/sudo -S ufw delete allow $port 2>$null | Out-Null
         }
         else {
             Write-Host "Sudo not available, skipping firewall cleanup for port $port"
@@ -134,13 +134,13 @@ $ScriptBlockEnableFirewallRules = {
     }
     else {
         # Check if passwordless sudo is available
-        sudo -n true 2>$null
+        /usr/bin/sudo -n true 2>$null
         $canSudo = $LASTEXITCODE -eq 0
         if ($canSudo) {
-            sudo ufw allow $port | Out-Null
+            /usr/bin/sudo ufw allow $port | Out-Null
         }
         elseif (-not [String]::IsNullOrWhiteSpace($creds.GetNetworkCredential().Password)) {
-            Write-Output $creds.GetNetworkCredential().Password | sudo -S ufw allow $port 2>$null | Out-Null
+            Write-Output $creds.GetNetworkCredential().Password | /usr/bin/sudo -S ufw allow $port 2>$null | Out-Null
         }
         else {
             Write-Host "Sudo not available, skipping firewall rule for port $port"
