@@ -64,30 +64,37 @@ $ScriptBlockMoveLibrary = {
         $isRoot = (id -u) -eq 0
         
         if ($isRoot) {
-            # Running as root, no sudo needed
+            # Running as root, move library to system path
             mv $remoteToolPath /usr/local/lib
             ldconfig
             Write-Host "Successfully moved library to /usr/local/lib"
         }
-        else {
+        elseif (Get-Command sudo -ErrorAction SilentlyContinue) {
             # Check if passwordless sudo is available
-            /usr/bin/sudo -n true 2>$null
+            sudo -n true 2>$null
             $canSudo = $LASTEXITCODE -eq 0
             if ($canSudo) {
-                /usr/bin/sudo mv $remoteToolPath /usr/local/lib
-                /usr/bin/sudo ldconfig
+                sudo mv $remoteToolPath /usr/local/lib
+                sudo ldconfig
                 Write-Host "Successfully moved library to /usr/local/lib using sudo"
             }
             elseif (-not [String]::IsNullOrWhiteSpace($creds.GetNetworkCredential().Password)) {
                 # Try with password
                 $pass = $creds.GetNetworkCredential().Password
-                Write-Output $pass | /usr/bin/sudo -S mv $remoteToolPath /usr/local/lib 2>$null
-                Write-Output $pass | /usr/bin/sudo -S ldconfig 2>$null
+                Write-Output $pass | sudo -S mv $remoteToolPath /usr/local/lib 2>$null
+                Write-Output $pass | sudo -S ldconfig 2>$null
                 Write-Host "Successfully moved library to /usr/local/lib using sudo with password"
             }
             else {
-                Write-Host "Not running as root and sudo not available. Library will remain in working directory."
+                Write-Host "Sudo requires password but none provided. Library will remain in working directory."
             }
+        }
+        else {
+            # Try without elevated privileges
+            Write-Host "Not running as root and sudo not available. Attempting without elevation..."
+            mv $remoteToolPath /usr/local/lib
+            ldconfig
+            Write-Host "Successfully moved library to /usr/local/lib"
         }
     }
     catch {
@@ -107,17 +114,29 @@ $ScriptBlockCleanupFirewallRules = {
         Write-Host 'Ufw is not installed'
     }
     else {
-        # Check if passwordless sudo is available
-        /usr/bin/sudo -n true 2>$null
-        $canSudo = $LASTEXITCODE -eq 0
-        if ($canSudo) {
-            /usr/bin/sudo ufw delete allow $port | Out-Null
+        # Check if running as root (UID 0)
+        $isRoot = (id -u) -eq 0
+        if ($isRoot) {
+            ufw delete allow $port | Out-Null
         }
-        elseif (-not [String]::IsNullOrWhiteSpace($creds.GetNetworkCredential().Password)) {
-            Write-Output $creds.GetNetworkCredential().Password | /usr/bin/sudo -S ufw delete allow $port 2>$null | Out-Null
+        elseif (Get-Command sudo -ErrorAction SilentlyContinue) {
+            # Check if passwordless sudo is available
+            sudo -n true 2>$null
+            $canSudo = $LASTEXITCODE -eq 0
+            if ($canSudo) {
+                sudo ufw delete allow $port | Out-Null
+            }
+            elseif (-not [String]::IsNullOrWhiteSpace($creds.GetNetworkCredential().Password)) {
+                Write-Output $creds.GetNetworkCredential().Password | sudo -S ufw delete allow $port 2>$null | Out-Null
+            }
+            else {
+                Write-Host "Sudo requires password but none provided, skipping firewall cleanup for port $port"
+            }
         }
         else {
-            Write-Host "Sudo not available, skipping firewall cleanup for port $port"
+            # Try without elevated privileges
+            Write-Host "Not running as root and sudo not available. Attempting without elevation..."
+            ufw delete allow $port | Out-Null
         }
     }
  } # $ScriptBlockCleanupFirewallRules()
@@ -133,17 +152,29 @@ $ScriptBlockEnableFirewallRules = {
         Write-Host 'Ufw is not installed'
     }
     else {
-        # Check if passwordless sudo is available
-        /usr/bin/sudo -n true 2>$null
-        $canSudo = $LASTEXITCODE -eq 0
-        if ($canSudo) {
-            /usr/bin/sudo ufw allow $port | Out-Null
+        # Check if running as root (UID 0)
+        $isRoot = (id -u) -eq 0
+        if ($isRoot) {
+            ufw allow $port | Out-Null
         }
-        elseif (-not [String]::IsNullOrWhiteSpace($creds.GetNetworkCredential().Password)) {
-            Write-Output $creds.GetNetworkCredential().Password | /usr/bin/sudo -S ufw allow $port 2>$null | Out-Null
+        elseif (Get-Command sudo -ErrorAction SilentlyContinue) {
+            # Check if passwordless sudo is available
+            sudo -n true 2>$null
+            $canSudo = $LASTEXITCODE -eq 0
+            if ($canSudo) {
+                sudo ufw allow $port | Out-Null
+            }
+            elseif (-not [String]::IsNullOrWhiteSpace($creds.GetNetworkCredential().Password)) {
+                Write-Output $creds.GetNetworkCredential().Password | sudo -S ufw allow $port 2>$null | Out-Null
+            }
+            else {
+                Write-Host "Sudo requires password but none provided, skipping firewall rule for port $port"
+            }
         }
         else {
-            Write-Host "Sudo not available, skipping firewall rule for port $port"
+            # Try without elevated privileges
+            Write-Host "Not running as root and sudo not available. Attempting without elevation..."
+            ufw allow $port | Out-Null
         }
     }
  } # $ScriptBlockEnableFirewallRules()
