@@ -90,11 +90,7 @@ $ScriptBlockMoveLibrary = {
             }
         }
         else {
-            # Try without elevated privileges
-            Write-Host "Not running as root and sudo not available. Attempting without elevation..."
-            mv $remoteToolPath /usr/local/lib
-            ldconfig
-            Write-Host "Successfully moved library to /usr/local/lib"
+            Write-Host "Not running as root and sudo not available. Library will remain in working directory."
         }
     }
     catch {
@@ -134,9 +130,7 @@ $ScriptBlockCleanupFirewallRules = {
             }
         }
         else {
-            # Try without elevated privileges
-            Write-Host "Not running as root and sudo not available. Attempting without elevation..."
-            ufw delete allow $port | Out-Null
+            Write-Host "Not running as root and sudo not available, skipping firewall cleanup for port $port"
         }
     }
  } # $ScriptBlockCleanupFirewallRules()
@@ -172,9 +166,7 @@ $ScriptBlockEnableFirewallRules = {
             }
         }
         else {
-            # Try without elevated privileges
-            Write-Host "Not running as root and sudo not available. Attempting without elevation..."
-            ufw allow $port | Out-Null
+            Write-Host "Not running as root and sudo not available, skipping firewall rule for port $port"
         }
     }
  } # $ScriptBlockEnableFirewallRules()
